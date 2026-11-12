@@ -130,7 +130,6 @@ if (!eventId) {
 // イベント作成画面
 // ------------------------------------------
 function renderCreateEventPage() {
-    // name属性にランダムな値を付与してオートコンプリートを完全に防ぐ
     const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
     
     appDiv.innerHTML = `
@@ -285,7 +284,7 @@ async function renderRsvpPage(id) {
     appDiv.innerHTML = `<div class="text-center text-stone-500 py-10">読み込み中...</div>`;
     
     let rsvpDataList = [];
-    let isAdmin = false; // ★ 管理者モードのフラグ
+    let isAdmin = false;
 
     try {
         const eventSnap = await getDoc(doc(db, "events", id));
@@ -297,9 +296,6 @@ async function renderRsvpPage(id) {
 
         const eventData = eventSnap.data();
         
-        // ------------------------------------------
-        // 60日経過の自動削除チェック
-        // ------------------------------------------
         if (eventData.date) {
             const eDate = new Date(eventData.date);
             const now = new Date();
@@ -358,9 +354,8 @@ async function renderRsvpPage(id) {
                 ${eventData.description ? 
                     `<div class="bg-[#F4F1EA] p-6 text-sm text-stone-700 leading-loose whitespace-pre-wrap rounded-sm border border-stone-200">${escapeHTML(eventData.description)}</div>` : ''}
 
-                <div class="mt-6 flex items-center gap-2 max-w-lg">
-                    <input type="text" readonly value="${eventUrl}" class="flex-1 border border-stone-300 p-2 text-xs bg-white text-stone-500 outline-none">
-                    <button id="copyBtn" class="bg-stone-200 px-4 py-2 text-xs font-bold hover:bg-stone-300 transition text-stone-700 whitespace-nowrap">URLをコピー</button>
+                <div class="mt-6">
+                    <button id="copyBtn" class="bg-stone-200 px-4 py-2 text-xs font-bold hover:bg-stone-300 transition text-stone-700 w-28 text-center rounded-sm border border-stone-300">URLをコピー</button>
                 </div>
             </div>
 
@@ -396,7 +391,6 @@ async function renderRsvpPage(id) {
                 <button id="toggleRegBtn" class="bg-[#7B2C3A] text-white text-sm font-bold px-8 py-3 rounded-sm shadow-md hover:bg-[#5A1F29] transition tracking-widest">＋ 新規名簿登録</button>
             </div>
             
-            <!-- 出欠入力フォーム本体（強力なキャッシュ防止） -->
             <form id="registrationForm" autocomplete="off" onsubmit="return false;" class="mb-12 bg-[#F4F1EA] p-6 border border-stone-200 rounded-sm hidden transition-all duration-300">
                 <div class="space-y-4 text-sm max-w-xl mx-auto">
                     <div class="grid grid-cols-2 gap-4">
@@ -442,7 +436,7 @@ async function renderRsvpPage(id) {
                 </div>
             </div>
             
-            <p class="text-xs text-stone-500 mb-3">自分の行の「出欠」や「コメント」はいつでもクリックして編集できます。</p>
+            <p id="editNotice" class="text-xs text-stone-500 mb-3">自分の行の「出欠」や「コメント」はいつでもクリックして編集できます。</p>
             
             <div class="hidden md:grid grid-cols-12 gap-3 mb-1 px-4 py-2 bg-[#F4F1EA] border border-stone-300 text-xs font-bold text-stone-700">
                 <div class="col-span-4">お名前</div>
@@ -462,8 +456,15 @@ async function renderRsvpPage(id) {
 
         document.getElementById('copyBtn').addEventListener('click', () => {
             navigator.clipboard.writeText(eventUrl);
-            document.getElementById('copyBtn').textContent = "コピー済";
-            setTimeout(() => document.getElementById('copyBtn').textContent = "URLをコピー", 2000);
+            const btn = document.getElementById('copyBtn');
+            btn.textContent = "コピー済";
+            btn.classList.add("bg-[#7B2C3A]", "text-white", "border-[#7B2C3A]");
+            btn.classList.remove("bg-stone-200", "text-stone-700", "border-stone-300");
+            setTimeout(() => {
+                btn.textContent = "URLをコピー";
+                btn.classList.remove("bg-[#7B2C3A]", "text-white", "border-[#7B2C3A]");
+                btn.classList.add("bg-stone-200", "text-stone-700", "border-stone-300");
+            }, 2000);
         });
         
         document.getElementById('toggleRegBtn').addEventListener('click', () => {
@@ -488,7 +489,8 @@ async function renderRsvpPage(id) {
             if (inputPin === null) return;
             if (inputPin !== eventData.pin) return await showModal('alert', 'エラー', 'パスワードが違います。');
             
-            isAdmin = true; // 管理者モードON（名前編集が可能になる）
+            isAdmin = true;
+            document.getElementById('editNotice').textContent = "【管理者モード】名前や性別も直接クリックして編集できます。";
             renderListDOM();
             
             document.getElementById('eventDisplayArea').classList.add('hidden');
@@ -585,6 +587,8 @@ async function renderRsvpPage(id) {
                 await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { lastName: e.target.value });
             } else if (e.target.classList.contains('first-name-input')) {
                 await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { firstName: e.target.value });
+            } else if (e.target.classList.contains('gender-dropdown')) {
+                await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { gender: e.target.value });
             }
         });
 
@@ -637,20 +641,23 @@ async function renderRsvpPage(id) {
                 const row = document.createElement('div');
                 row.className = "grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-3 items-center w-full px-4 py-3 border-b border-stone-200 bg-transparent hover:bg-[#F4F1EA] transition text-sm";
                 
-                const genderDisp = `<span class="text-[10px] text-stone-400 font-normal shrink-0 ml-1">(${escapeHTML(gender)})</span>`;
-                
-                // ★管理者の場合はインライン編集用の枠を表示、一般ユーザーの場合は「姓 名（半角スペース）」のテキスト表示
                 let nameHtml = '';
                 if (isAdmin) {
                     nameHtml = `
-                        <div class="md:col-span-4 flex items-center gap-1 pr-2 w-full">
-                            <input type="text" name="${rName()}" class="last-name-input flex-1 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition px-1" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
-                            <input type="text" name="${rName()}" class="first-name-input flex-1 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition px-1" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
-                            ${genderDisp}
+                        <div class="md:col-span-4 flex items-center pr-2 w-full">
+                            <input type="text" name="${rName()}" class="last-name-input w-16 md:w-20 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition px-1" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
+                            <span class="text-stone-300 mx-0.5"> </span>
+                            <input type="text" name="${rName()}" class="first-name-input w-16 md:w-20 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition px-1" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
+                            <select name="${rName()}" class="gender-dropdown ml-auto md:ml-2 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-[10px] text-stone-500 font-normal cursor-pointer transition px-1" data-id="${data.id}">
+                                <option value="男" ${gender === '男' ? 'selected' : ''}>男</option>
+                                <option value="女" ${gender === '女' ? 'selected' : ''}>女</option>
+                                <option value="その他" ${gender === 'その他' ? 'selected' : ''}>その他</option>
+                            </select>
                         </div>
                     `;
                 } else {
                     const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
+                    const genderDisp = `<span class="text-[10px] text-stone-400 font-normal shrink-0 ml-2">(${escapeHTML(gender)})</span>`;
                     nameHtml = `<div class="md:col-span-4 font-bold text-stone-800 truncate text-base">${fullName}${genderDisp}</div>`;
                 }
 
