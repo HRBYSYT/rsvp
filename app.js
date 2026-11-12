@@ -20,30 +20,30 @@ const db = getFirestore(app);
 
 const urlParams = new URLSearchParams(window.location.search);
 const eventId = urlParams.get('id');
+// ボディ全体の背景色を高級感のあるオフホワイト（#FAF9F6）に変更
+document.body.className = "bg-[#FAF9F6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white";
 const appDiv = document.getElementById('app');
+// メインコンテナの装飾（ワインレッドのトップボーダー、シャドウ）
+appDiv.className = "bg-white p-6 md:p-10 shadow-lg border border-stone-200 border-t-[6px] border-t-[#7B2C3A] rounded-sm max-w-3xl mx-auto mt-8 mb-20";
 
 // ==========================================
-// 各種SVGアイコン（サイズと線を完全に統一）
+// 各種SVGアイコン
 // ==========================================
 const svgChevron = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
-const svgCalendar = `<svg class="w-5 h-5 inline-block mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
-const svgMapPin = `<svg class="w-5 h-5 inline-block mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>`;
-const svgDoc = `<svg class="w-5 h-5 inline-block mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
 const svgEdit = `<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
 
-// 出欠用SVGアイコン（20x20で統一）
-const svgMaru = `<svg viewBox="0 0 24 24" class="w-5 h-5 inline-block text-green-500" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="8"></circle></svg>`;
-const svgSankaku = `<svg viewBox="0 0 24 24" class="w-5 h-5 inline-block text-yellow-500" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 4L3 19h18L12 4z" stroke-linejoin="round"></path></svg>`;
-const svgBatsu = `<svg viewBox="0 0 24 24" class="w-5 h-5 inline-block text-red-500" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 7l10 10M17 7L7 17" stroke-linecap="round"></path></svg>`;
-const svgDash = `<svg viewBox="0 0 24 24" class="w-5 h-5 inline-block text-gray-400" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 12h12" stroke-linecap="round"></path></svg>`;
+const svgMaru = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-emerald-600" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="8"></circle></svg>`;
+const svgSankaku = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-amber-500" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 4L3 19h18L12 4z" stroke-linejoin="round"></path></svg>`;
+const svgBatsu = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-rose-600" fill="none" stroke="currentColor" stroke-width="3"><path d="M7 7l10 10M17 7L7 17" stroke-linecap="round"></path></svg>`;
+const svgDash = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-stone-400" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14" stroke-linecap="round"></path></svg>`;
 
-// 時間のプルダウンを生成する関数（minTime以降のみ生成）
+// 時間のプルダウンを生成する関数
 function generateTimeOptions(defaultTime, minTime = null) {
     let options = `<option value="">未選択</option>`;
     for (let h = 0; h < 24; h++) {
         for (let m = 0; m < 60; m += 30) {
             let time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-            if (minTime && time <= minTime) continue; // 開始時間以前の選択肢を除外
+            if (minTime && time <= minTime) continue;
             let selected = time === defaultTime ? 'selected' : '';
             options += `<option value="${time}" ${selected}>${time}</option>`;
         }
@@ -51,7 +51,6 @@ function generateTimeOptions(defaultTime, minTime = null) {
     return options;
 }
 
-// 日付フォーマット変換（YYYY-MM-DD -> YYYY年MM月DD日）
 function formatDateDisplay(dateStr) {
     if (!dateStr) return '未定';
     const [y, m, d] = dateStr.split('-');
@@ -69,63 +68,70 @@ if (!eventId) {
 // ------------------------------------------
 function renderCreateEventPage() {
     appDiv.innerHTML = `
-        <h1 class="text-2xl font-bold mb-6 text-center text-indigo-600">新しいイベントを作成</h1>
-        <div class="space-y-4">
+        <h1 class="text-2xl font-bold mb-8 text-center text-[#7B2C3A] tracking-wider">新規イベント作成</h1>
+        <div class="space-y-6 text-sm">
             <div>
-                <label class="block text-sm font-medium mb-1">イベント名 <span class="text-red-500">*</span></label>
-                <input type="text" id="eventName" autocomplete="new-password" class="w-full border rounded p-2 focus:ring focus:ring-indigo-200" placeholder="例：2024年 忘年会">
+                <label class="block font-bold mb-2 text-stone-700">イベント名 <span class="text-[#7B2C3A]">*</span></label>
+                <input type="text" id="eventName" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" placeholder="例：カラリスト忘年会 2026">
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                    <label class="block text-sm font-medium mb-1">日にち</label>
-                    <input type="date" id="eventDate" class="w-full border rounded p-2 focus:ring focus:ring-indigo-200">
+                    <label class="block font-bold mb-2 text-stone-700">日にち</label>
+                    <input type="date" id="eventDate" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">開始時間</label>
+                    <label class="block font-bold mb-2 text-stone-700">開始時間</label>
                     <div class="relative">
-                        <select id="eventStartTime" class="appearance-none w-full border rounded p-2 focus:ring focus:ring-indigo-200 pr-8 bg-white">
+                        <select id="eventStartTime" class="appearance-none w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white pr-8 transition">
                             ${generateTimeOptions('')}
                         </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">${svgChevron}</div>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-stone-500">${svgChevron}</div>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">終了時間</label>
+                    <label class="block font-bold mb-2 text-stone-700">終了時間</label>
                     <div class="relative">
-                        <select id="eventEndTime" class="appearance-none w-full border rounded p-2 focus:ring focus:ring-indigo-200 pr-8 bg-white">
+                        <select id="eventEndTime" class="appearance-none w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white pr-8 transition">
                             ${generateTimeOptions('')}
                         </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">${svgChevron}</div>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-stone-500">${svgChevron}</div>
                     </div>
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">場所</label>
-                <div class="relative">
-                    <input type="text" id="eventLocation" autocomplete="new-password" class="w-full border rounded p-2 focus:ring focus:ring-indigo-200" placeholder="場所の名前を入力して検索...">
-                    <!-- 検索結果のサジェストリスト -->
-                    <div id="locSuggestions" class="absolute z-10 w-full bg-white border rounded shadow-lg max-h-48 overflow-y-auto hidden"></div>
+            <div class="bg-[#F9F8F6] p-4 border border-stone-200 rounded-sm">
+                <div class="mb-4">
+                    <label class="block font-bold mb-2 text-stone-700">マップ検索用キーワード</label>
+                    <div class="relative">
+                        <input type="text" id="eventLocationQuery" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="場所を検索（例：高輪プリンスホテル）">
+                        <div id="locSuggestions" class="absolute z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
+                    </div>
+                    <p class="text-xs text-stone-500 mt-2">※検索して選ぶと、裏側でGoogleマップのピンとして登録されます。</p>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">※場所を入力すると候補が出ます。登録するとGoogleマップが自動で紐づきます。</p>
+                <div>
+                    <label class="block font-bold mb-2 text-stone-700">画面に表示するテキスト <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
+                    <input type="text" id="eventLocation" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="例：高輪プリンスホテル 飛天の間">
+                </div>
             </div>
 
             <div>
-                <label class="block text-sm font-medium mb-1">詳細・備考</label>
-                <textarea id="eventDesc" autocomplete="new-password" class="w-full border rounded p-2 h-24 focus:ring focus:ring-indigo-200" placeholder="会費や待ち合わせ場所などの詳細"></textarea>
+                <label class="block font-bold mb-2 text-stone-700">詳細・備考</label>
+                <textarea id="eventDesc" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 h-32 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" placeholder="会費や待ち合わせ場所などの詳細"></textarea>
             </div>
             
-            <div class="bg-red-50 p-4 rounded mt-6 border border-red-100">
-                <label class="block text-sm font-bold text-red-600 mb-1">管理用パスワード（数字4桁） <span class="text-red-500">*</span></label>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventPin" maxlength="4" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-full md:w-1/2 border rounded p-2 focus:ring focus:ring-red-200 tracking-widest text-lg" placeholder="例：1234">
+            <div class="border-t border-stone-200 pt-6 mt-6">
+                <label class="block font-bold mb-2 text-[#7B2C3A]">管理用パスワード（数字4桁） <span class="text-[#7B2C3A]">*</span></label>
+                <p class="text-xs text-stone-500 mb-2">※イベント内容の編集・削除時に必要になります。</p>
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventPin" maxlength="4" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-full md:w-1/3 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] tracking-widest text-lg bg-stone-50 focus:bg-white transition" placeholder="1234">
             </div>
 
-            <button id="createBtn" class="w-full bg-indigo-600 text-white font-bold py-3 rounded hover:bg-indigo-700 transition mt-4">イベント専用URLを作成する</button>
+            <div class="pt-4">
+                <button id="createBtn" class="w-full bg-[#7B2C3A] text-white font-bold py-4 rounded-sm hover:bg-[#5A1F29] transition shadow-md tracking-wider">イベントページを作成する</button>
+            </div>
         </div>
     `;
 
-    // 開始時間変更時に終了時間のプルダウンを制御
     const startSel = document.getElementById('eventStartTime');
     const endSel = document.getElementById('eventEndTime');
     startSel.addEventListener('change', () => {
@@ -133,12 +139,12 @@ function renderCreateEventPage() {
         endSel.innerHTML = generateTimeOptions(currentEnd, startSel.value);
     });
 
-    // 場所のサジェスト（候補）検索機能 (OpenStreetMap Nominatim APIを使用)
-    const locInput = document.getElementById('eventLocation');
+    const locQuery = document.getElementById('eventLocationQuery');
+    const locDisp = document.getElementById('eventLocation');
     const locSug = document.getElementById('locSuggestions');
     let locTimeout;
 
-    locInput.addEventListener('input', (e) => {
+    locQuery.addEventListener('input', (e) => {
         clearTimeout(locTimeout);
         const q = e.target.value.trim();
         if (q.length < 2) {
@@ -147,47 +153,40 @@ function renderCreateEventPage() {
         }
         locTimeout = setTimeout(async () => {
             try {
-                // 日本国内に絞って検索
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=jp`);
                 const data = await res.json();
                 if (data.length > 0) {
-                    locSug.innerHTML = data.map(item => `
-                        <div class="p-2 hover:bg-indigo-50 cursor-pointer border-b text-sm text-gray-700" data-name="${item.name || item.display_name.split(',')[0]}">
-                            <div class="font-bold">${item.name || item.display_name.split(',')[0]}</div>
-                            <div class="text-xs text-gray-500 truncate">${item.display_name}</div>
-                        </div>
-                    `).join('');
+                    locSug.innerHTML = data.map(item => {
+                        const name = item.name || item.display_name.split(',')[0];
+                        return `<div class="p-3 hover:bg-[#F9F8F6] cursor-pointer border-b border-stone-100 text-sm text-stone-700 transition" data-name="${name}">
+                                    <div class="font-bold">${name}</div>
+                                    <div class="text-xs text-stone-400 truncate mt-1">${item.display_name}</div>
+                                </div>`;
+                    }).join('');
                     locSug.classList.remove('hidden');
                     
                     locSug.querySelectorAll('div[data-name]').forEach(div => {
                         div.addEventListener('click', (ev) => {
-                            locInput.value = ev.currentTarget.getAttribute('data-name');
+                            const selectedName = ev.currentTarget.getAttribute('data-name');
+                            locQuery.value = selectedName;
+                            locDisp.value = selectedName; // 選択時に表示名も一旦同じもので埋める
                             locSug.classList.add('hidden');
                         });
                     });
-                } else {
-                    locSug.innerHTML = `<div class="p-2 text-sm text-gray-500">候補が見つかりません。このまま入力を使用できます。</div>`;
-                    locSug.classList.remove('hidden');
                 }
-            } catch(err) {
-                console.error(err);
-            }
-        }, 500); // タイピング後0.5秒で検索
+            } catch(err) {}
+        }, 500);
     });
 
-    // 余白クリックでサジェストを閉じる
     document.addEventListener('click', (e) => {
-        if (!locInput.contains(e.target) && !locSug.contains(e.target)) {
-            locSug.classList.add('hidden');
-        }
+        if (!locQuery.contains(e.target) && !locSug.contains(e.target)) locSug.classList.add('hidden');
     });
 
     document.getElementById('createBtn').addEventListener('click', async () => {
         const name = document.getElementById('eventName').value;
         const pin = document.getElementById('eventPin').value;
-        
         if (!name) return alert("イベント名を入力してください");
-        if (pin.length !== 4) return alert("管理用パスワードは数字4桁で入力してください");
+        if (pin.length !== 4) return alert("パスワードは数字4桁で入力してください");
 
         document.getElementById('createBtn').textContent = "作成中...";
         document.getElementById('createBtn').disabled = true;
@@ -198,16 +197,16 @@ function renderCreateEventPage() {
                 date: document.getElementById('eventDate').value,
                 startTime: document.getElementById('eventStartTime').value,
                 endTime: document.getElementById('eventEndTime').value,
-                location: document.getElementById('eventLocation').value,
+                locationQuery: locQuery.value, // マップ用
+                location: locDisp.value,       // 表示用
                 description: document.getElementById('eventDesc').value,
                 pin: pin,
                 createdAt: serverTimestamp()
             });
             window.location.href = `?id=${docRef.id}`;
         } catch (e) {
-            console.error("エラー:", e);
             alert("エラーが発生しました。");
-            document.getElementById('createBtn').textContent = "イベント専用URLを作成する";
+            document.getElementById('createBtn').textContent = "イベントページを作成する";
             document.getElementById('createBtn').disabled = false;
         }
     });
@@ -217,13 +216,13 @@ function renderCreateEventPage() {
 // 出欠入力・一覧画面
 // ------------------------------------------
 async function renderRsvpPage(id) {
-    appDiv.innerHTML = `<div class="text-center text-gray-500">イベント情報を取得中...</div>`;
+    appDiv.innerHTML = `<div class="text-center text-stone-500 py-10">読み込み中...</div>`;
 
     try {
         const eventSnap = await getDoc(doc(db, "events", id));
         if (!eventSnap.exists()) {
-            appDiv.innerHTML = `<div class="text-center text-red-500 font-bold">イベントが見つかりません。</div>
-                                <div class="mt-4 text-center"><a href="?" class="text-indigo-500 hover:underline">トップへ戻る</a></div>`;
+            appDiv.innerHTML = `<div class="text-center text-[#7B2C3A] font-bold py-10">イベントが見つかりません。</div>
+                                <div class="text-center"><a href="?" class="text-stone-500 hover:underline">トップへ戻る</a></div>`;
             return;
         }
 
@@ -232,119 +231,141 @@ async function renderRsvpPage(id) {
         
         const dateStr = formatDateDisplay(eventData.date);
         const timeStr = (eventData.startTime || eventData.endTime) ? 
-                        `${eventData.startTime || '未定'} 〜 ${eventData.endTime || '未定'}` : '';
+                        `開始 ${eventData.startTime || '未定'} 〜 終了 ${eventData.endTime || '未定'}` : '';
         
+        // 検索用キーワードがあればそれを使用、なければ表示用を使用
+        const targetQuery = eventData.locationQuery || eventData.location;
         let locationHTML = '未定';
         if (eventData.location) {
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventData.location)}`;
-            locationHTML = `<a href="${mapUrl}" target="_blank" class="inline-flex items-center text-blue-600 hover:underline break-all">${escapeHTML(eventData.location)}</a>`;
+            if (targetQuery) {
+                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(targetQuery)}`;
+                locationHTML = `<a href="${mapUrl}" target="_blank" class="text-stone-800 hover:text-[#7B2C3A] hover:underline underline-offset-4 transition">${escapeHTML(eventData.location)}</a>`;
+            } else {
+                locationHTML = escapeHTML(eventData.location);
+            }
         }
 
         appDiv.innerHTML = `
-            <div id="eventDisplayArea" class="mb-8 border-b pb-6 relative">
-                <button id="editEventBtn" class="absolute top-0 right-0 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded flex items-center font-bold shadow-sm">${svgEdit} 編集</button>
-                <h1 class="text-3xl font-bold text-gray-800 mb-4 pr-16">${escapeHTML(eventData.name)}</h1>
+            <div id="eventDisplayArea" class="mb-10 relative">
+                <button id="editEventBtn" class="absolute top-0 right-0 text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-white px-2 py-1">${svgEdit} 編集</button>
+                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] pr-16">${escapeHTML(eventData.name)}</h1>
                 
-                <div class="bg-gray-50 p-4 rounded-lg space-y-2 mb-4 text-gray-700">
-                    <p class="flex items-center"><span class="font-bold mr-2 text-gray-500 flex items-center">${svgCalendar} 日時:</span> <span>${escapeHTML(dateStr)} ${escapeHTML(timeStr)}</span></p>
-                    <p class="flex items-start"><span class="font-bold mr-2 text-gray-500 flex items-center whitespace-nowrap">${svgMapPin} 場所:</span> <span>${locationHTML}</span></p>
-                    ${eventData.description ? `<div class="mt-2 pt-2 border-t border-gray-200"><span class="font-bold mb-1 text-gray-500 flex items-center">${svgDoc} 詳細:</span><p class="whitespace-pre-wrap mt-1">${escapeHTML(eventData.description)}</p></div>` : ''}
+                <div class="space-y-3 mb-6 text-sm text-stone-700 leading-relaxed px-2">
+                    <div class="flex flex-col md:flex-row md:items-center">
+                        <span class="font-bold w-20 text-stone-500 shrink-0">日程</span>
+                        <span>${escapeHTML(dateStr)} ${escapeHTML(timeStr)}</span>
+                    </div>
+                    <div class="flex flex-col md:flex-row md:items-start">
+                        <span class="font-bold w-20 text-stone-500 shrink-0">会場</span>
+                        <span>${locationHTML}</span>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <input type="text" readonly value="${eventUrl}" class="flex-1 border rounded p-2 text-sm bg-gray-50 text-gray-500" id="shareUrl">
-                    <button id="copyBtn" class="bg-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300 font-bold whitespace-nowrap">URLをコピー</button>
+                ${eventData.description ? 
+                    `<div class="bg-[#F9F8F6] p-6 text-sm text-stone-700 leading-loose whitespace-pre-wrap rounded-sm border border-stone-200">${escapeHTML(eventData.description)}</div>` : ''}
+
+                <div class="mt-6 flex items-center gap-2 max-w-lg">
+                    <input type="text" readonly value="${eventUrl}" class="flex-1 border border-stone-300 p-2 text-xs bg-stone-50 text-stone-500 outline-none">
+                    <button id="copyBtn" class="bg-stone-200 px-4 py-2 text-xs font-bold hover:bg-stone-300 transition text-stone-700 whitespace-nowrap">URLをコピー</button>
                 </div>
             </div>
 
-            <!-- 編集フォーム（初期非表示） -->
-            <div id="eventEditArea" class="mb-8 border-b pb-6 hidden bg-yellow-50 p-4 rounded">
-                <h2 class="text-lg font-bold mb-4 text-yellow-800 flex items-center">${svgEdit} イベント情報の編集</h2>
-                <div class="space-y-3">
-                    <input type="text" id="editName" autocomplete="new-password" class="w-full border rounded p-2" value="${escapeHTML(eventData.name)}">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                        <input type="date" id="editDate" class="border rounded p-2 bg-white" value="${eventData.date || ''}">
-                        <div class="relative">
-                            <select id="editStartTime" class="appearance-none w-full border rounded p-2 bg-white pr-8">${generateTimeOptions(eventData.startTime)}</select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">${svgChevron}</div>
+            <!-- 編集フォーム -->
+            <div id="eventEditArea" class="mb-10 hidden bg-[#F9F8F6] p-6 border border-stone-200 rounded-sm">
+                <h2 class="text-lg font-bold mb-4 text-[#7B2C3A] flex items-center">${svgEdit} イベント情報の編集</h2>
+                <div class="space-y-4 text-sm">
+                    <input type="text" id="editName" autocomplete="new-password" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.name)}">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input type="date" id="editDate" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A]" value="${eventData.date || ''}">
+                        <select id="editStartTime" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A]">${generateTimeOptions(eventData.startTime)}</select>
+                        <select id="editEndTime" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A]">${generateTimeOptions(eventData.endTime, eventData.startTime)}</select>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2 p-3 bg-white border border-stone-200">
+                        <div>
+                            <label class="text-xs font-bold text-stone-500">マップ検索用キーワード</label>
+                            <input type="text" id="editLocationQuery" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.locationQuery || '')}">
                         </div>
-                        <div class="relative">
-                            <select id="editEndTime" class="appearance-none w-full border rounded p-2 bg-white pr-8">${generateTimeOptions(eventData.endTime, eventData.startTime)}</select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">${svgChevron}</div>
+                        <div>
+                            <label class="text-xs font-bold text-stone-500 mt-2">画面表示用のテキスト</label>
+                            <input type="text" id="editLocation" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.location || '')}">
                         </div>
                     </div>
-                    <input type="text" id="editLocation" autocomplete="new-password" class="w-full border rounded p-2 bg-white" value="${escapeHTML(eventData.location || '')}" placeholder="場所">
-                    <textarea id="editDesc" autocomplete="new-password" class="w-full border rounded p-2 h-24 bg-white">${escapeHTML(eventData.description || '')}</textarea>
-                    <div class="flex gap-2">
-                        <button id="saveEditBtn" class="flex-1 bg-yellow-600 text-white font-bold py-2 rounded">保存する</button>
-                        <button id="cancelEditBtn" class="bg-gray-300 px-4 py-2 rounded font-bold">キャンセル</button>
+                    <textarea id="editDesc" autocomplete="new-password" class="w-full border border-stone-300 p-2 h-24 focus:outline-none focus:border-[#7B2C3A]">${escapeHTML(eventData.description || '')}</textarea>
+                    <div class="flex gap-3 pt-2">
+                        <button id="saveEditBtn" class="flex-1 bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition">保存する</button>
+                        <button id="cancelEditBtn" class="bg-stone-300 px-6 py-3 rounded-sm font-bold text-stone-700 hover:bg-stone-400 transition">キャンセル</button>
                     </div>
                 </div>
             </div>
 
-            <h2 class="text-xl font-bold mb-4">メンバーを追加</h2>
-            <div class="space-y-4 mb-10 bg-indigo-50 p-5 rounded-lg border border-indigo-100">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">苗字</label>
-                        <input type="text" id="lastName" autocomplete="new-password" class="w-full border rounded p-2" placeholder="山田">
+            <!-- 出欠入力フォーム -->
+            <div class="mb-12 bg-[#F9F8F6] p-6 border border-stone-200 rounded-sm">
+                <div class="text-center mb-6">
+                    <div class="inline-block bg-[#7B2C3A] text-white text-sm font-bold px-8 py-2 rounded-sm shadow-sm">名簿登録・お問い合わせ</div>
+                    <p class="text-xs text-stone-500 mt-3">※名簿にお名前がない方は、お手数ですがこちらからご登録をお願いいたします。</p>
+                </div>
+                
+                <div class="space-y-4 text-sm max-w-xl mx-auto">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <input type="text" id="lastName" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A]" placeholder="姓（例：山田）">
+                        </div>
+                        <div>
+                            <input type="text" id="firstName" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A]" placeholder="名（例：太郎）">
+                        </div>
+                    </div>
+                    <div class="bg-white p-3 border border-stone-200 flex justify-center gap-6">
+                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="status" value="-" checked class="accent-[#7B2C3A]"> ${svgDash}</label>
+                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="status" value="〇" class="accent-[#7B2C3A]"> ${svgMaru}</label>
+                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="status" value="△" class="accent-[#7B2C3A]"> ${svgSankaku}</label>
+                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="status" value="×" class="accent-[#7B2C3A]"> ${svgBatsu}</label>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium mb-1">名前</label>
-                        <input type="text" id="firstName" autocomplete="new-password" class="w-full border rounded p-2" placeholder="太郎">
+                        <input type="text" id="guestComment" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A]" placeholder="備考（任意）">
                     </div>
+                    <button id="submitBtn" class="w-full bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition shadow-sm">リストに追加する</button>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">出欠ステータス</label>
-                    <div class="flex flex-wrap gap-5 font-bold text-gray-700">
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="-" checked> ${svgDash}</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="〇"> ${svgMaru}</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="△"> ${svgSankaku}</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="×"> ${svgBatsu}</label>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">備考（任意）</label>
-                    <input type="text" id="guestComment" autocomplete="new-password" class="w-full border rounded p-2" placeholder="遅れて参加します等">
-                </div>
-                <button id="submitBtn" class="w-full bg-indigo-600 text-white font-bold py-3 rounded hover:bg-indigo-700 mt-2">リストに追加する</button>
             </div>
 
-            <h2 class="text-xl font-bold mb-4 flex items-center border-l-4 border-indigo-600 pl-2">出欠リスト</h2>
-            
-            <div class="hidden md:grid grid-cols-12 gap-2 mb-2 px-3 text-sm font-bold text-gray-500">
-                <div class="col-span-4">名前</div>
-                <div class="col-span-4">出欠</div>
-                <div class="col-span-4">備考</div>
+            <!-- 出欠リスト（テーブル風デザイン） -->
+            <div class="mb-4 flex items-end justify-between border-b-2 border-stone-300 pb-2">
+                <h2 class="text-lg font-bold text-stone-800 tracking-wider">名簿</h2>
+                <div id="summaryArea" class="text-sm font-bold text-stone-600 flex gap-4"></div>
             </div>
             
-            <ul id="rsvpList" class="space-y-3"></ul>
+            <p class="text-xs text-stone-500 mb-3">自分の行の「出欠」を選ぶと、すぐに保存されます。</p>
             
-            <div class="mt-12 pt-8 border-t flex flex-col items-center gap-4">
-                <a href="?" class="text-sm text-indigo-500 hover:underline font-bold">別のイベントを新しく作る</a>
-                <button id="deleteEventBtn" class="text-xs text-red-400 hover:text-red-600">このイベントを完全に削除する</button>
+            <!-- リストヘッダー -->
+            <div class="hidden md:grid grid-cols-12 gap-3 mb-1 px-4 py-2 bg-[#F4F1EA] border border-stone-300 text-xs font-bold text-stone-700">
+                <div class="col-span-4">お名前</div>
+                <div class="col-span-3 text-center">出欠</div>
+                <div class="col-span-5">コメント</div>
+            </div>
+            
+            <div id="rsvpList" class="border-t md:border-t-0 border-stone-200"></div>
+            
+            <div class="mt-16 pt-8 border-t border-stone-200 flex flex-col items-center gap-4">
+                <a href="?" class="text-xs text-stone-500 hover:text-[#7B2C3A] font-bold transition">別のイベントを新しく作る</a>
+                <button id="deleteEventBtn" class="text-[10px] text-stone-400 hover:text-red-500 transition">このイベントを完全に削除する</button>
             </div>
         `;
 
         document.getElementById('copyBtn').addEventListener('click', () => {
             navigator.clipboard.writeText(eventUrl);
-            document.getElementById('copyBtn').textContent = "コピー完了!";
+            document.getElementById('copyBtn').textContent = "コピー済";
             setTimeout(() => document.getElementById('copyBtn').textContent = "URLをコピー", 2000);
         });
 
-        // 編集エリア内の時間制御
         const editStart = document.getElementById('editStartTime');
         const editEnd = document.getElementById('editEndTime');
         editStart.addEventListener('change', () => {
-            const currentEnd = editEnd.value;
-            editEnd.innerHTML = generateTimeOptions(currentEnd, editStart.value);
+            editEnd.innerHTML = generateTimeOptions(editEnd.value, editStart.value);
         });
 
         document.getElementById('editEventBtn').addEventListener('click', () => {
-            const inputPin = prompt("イベントの編集を行います。\n作成時に設定した4桁のパスワードを入力してください。");
+            const inputPin = prompt("イベントの編集を行います。\n管理用パスワード(4桁)を入力してください。");
             if (inputPin === null) return;
             if (inputPin !== eventData.pin) return alert("パスワードが違います。");
-            
             document.getElementById('eventDisplayArea').classList.add('hidden');
             document.getElementById('eventEditArea').classList.remove('hidden');
         });
@@ -357,7 +378,6 @@ async function renderRsvpPage(id) {
         document.getElementById('saveEditBtn').addEventListener('click', async () => {
             const newName = document.getElementById('editName').value;
             if (!newName) return alert("イベント名を入力してください");
-
             document.getElementById('saveEditBtn').textContent = "保存中...";
             try {
                 await updateDoc(doc(db, "events", id), {
@@ -365,6 +385,7 @@ async function renderRsvpPage(id) {
                     date: document.getElementById('editDate').value,
                     startTime: document.getElementById('editStartTime').value,
                     endTime: document.getElementById('editEndTime').value,
+                    locationQuery: document.getElementById('editLocationQuery').value,
                     location: document.getElementById('editLocation').value,
                     description: document.getElementById('editDesc').value
                 });
@@ -376,14 +397,13 @@ async function renderRsvpPage(id) {
         });
 
         document.getElementById('deleteEventBtn').addEventListener('click', async () => {
-            const inputPin = prompt("【警告】イベントを削除します。\n作成時に設定した4桁のパスワードを入力してください。");
+            const inputPin = prompt("【警告】イベントを削除します。\n管理用パスワードを入力してください。");
             if (inputPin === null) return;
             if (inputPin !== eventData.pin) return alert("パスワードが違います。");
-            
-            if (confirm("本当に出欠データも含めてこのイベントを完全に削除しますか？\n（この操作は取り消せません）")) {
+            if (confirm("本当に出欠データも含めて削除しますか？\n（この操作は取り消せません）")) {
                 try {
                     await deleteDoc(doc(db, "events", id));
-                    alert("イベントを削除しました。トップ画面に戻ります。");
+                    alert("削除しました。");
                     window.location.href = "?";
                 } catch(e) {
                     alert("削除に失敗しました。");
@@ -397,7 +417,7 @@ async function renderRsvpPage(id) {
             const status = document.querySelector('input[name="status"]:checked').value;
             const comment = document.getElementById('guestComment').value;
 
-            if (!lastName && !firstName) return alert("苗字か名前のどちらかは入力してください");
+            if (!lastName && !firstName) return alert("姓名のどちらかは入力してください");
 
             document.getElementById('submitBtn').textContent = "追加中...";
             document.getElementById('submitBtn').disabled = true;
@@ -422,20 +442,21 @@ async function renderRsvpPage(id) {
             if (e.target.classList.contains('status-dropdown')) {
                 const rsvpId = e.target.getAttribute('data-id');
                 const newStatus = e.target.value;
-                await updateDoc(doc(db, "events", id, "rsvps", rsvpId), {
-                    status: newStatus
-                });
+                await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { status: newStatus });
             }
         });
 
         onSnapshot(collection(db, "events", id, "rsvps"), (snapshot) => {
             const list = document.getElementById('rsvpList');
+            const summaryArea = document.getElementById('summaryArea');
             list.innerHTML = '';
             let counts = { '-': 0, '〇': 0, '△': 0, '×': 0 };
+            let total = 0;
 
             snapshot.forEach((docSnap) => {
                 const data = docSnap.data();
                 const rsvpId = docSnap.id;
+                total++;
                 
                 let currentStatus = data.status;
                 if(currentStatus.includes('〇')) currentStatus = '〇';
@@ -443,54 +464,44 @@ async function renderRsvpPage(id) {
                 else if(currentStatus.includes('×')) currentStatus = '×';
                 else currentStatus = '-';
 
-                if(counts[currentStatus] !== undefined) {
-                    counts[currentStatus]++;
-                }
+                if(counts[currentStatus] !== undefined) counts[currentStatus]++;
 
-                const li = document.createElement('li');
-                li.className = "p-3 bg-white border rounded shadow-sm hover:shadow-md transition";
+                const row = document.createElement('div');
+                // テーブル行のようなデザイン（PCは横並び、スマホは縦積みぎみ）
+                row.className = "grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-3 items-center w-full px-4 py-3 border-b border-stone-200 bg-white hover:bg-stone-50 transition text-sm";
                 
                 const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
 
-                // 出欠のプルダウン幅を「w-24（スマートなサイズ）」に縮小し、中央揃えにしました
-                li.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center w-full">
-                        <!-- 名前 -->
-                        <div class="md:col-span-4 font-bold text-lg truncate">${fullName}</div>
-                        
-                        <!-- 出欠（コンパクトサイズ） -->
-                        <div class="md:col-span-4 relative w-24">
-                            <select class="status-dropdown appearance-none w-full border border-gray-300 rounded py-2 pl-3 pr-8 text-base font-bold bg-gray-50 focus:ring-indigo-200 cursor-pointer text-center" data-id="${rsvpId}">
+                row.innerHTML = `
+                    <div class="md:col-span-4 font-bold text-stone-800 truncate">${fullName}</div>
+                    
+                    <div class="md:col-span-3 flex md:justify-center">
+                        <div class="relative w-24">
+                            <select class="status-dropdown appearance-none w-full border border-stone-300 rounded-sm py-1.5 pl-3 pr-8 text-sm font-bold bg-white focus:outline-none focus:border-[#7B2C3A] cursor-pointer text-center" data-id="${rsvpId}">
                                 <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
                                 <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
                                 <option value="△" ${currentStatus === '△' ? 'selected' : ''}>△</option>
                                 <option value="×" ${currentStatus === '×' ? 'selected' : ''}>×</option>
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">${svgChevron}</div>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-stone-400">${svgChevron}</div>
                         </div>
-                        
-                        <!-- 備考 -->
-                        <div class="md:col-span-4 text-sm text-gray-600 break-all pt-1 md:pt-0">${escapeHTML(data.comment || '')}</div>
                     </div>
+                    
+                    <div class="md:col-span-5 text-stone-600 break-all text-xs md:text-sm">${escapeHTML(data.comment || '')}</div>
                 `;
-                list.appendChild(li);
+                list.appendChild(row);
             });
 
-            // 集計ヘッダー（SVGを並べて美しく表示）
-            const summary = document.createElement('div');
-            summary.className = "flex flex-wrap justify-center gap-6 mb-4 text-lg font-bold bg-gray-100 p-4 rounded";
-            summary.innerHTML = `
-                <span class="flex items-center gap-1 text-green-600">${svgMaru} ${counts['〇']}名</span> 
-                <span class="flex items-center gap-1 text-yellow-600">${svgSankaku} ${counts['△']}名</span> 
-                <span class="flex items-center gap-1 text-red-500">${svgBatsu} ${counts['×']}名</span>
-                <span class="flex items-center gap-1 text-gray-500">${svgDash} ${counts['-']}名</span>
+            summaryArea.innerHTML = `
+                <span class="text-emerald-600">〇 参加 ${counts['〇']}人</span> 
+                <span class="text-amber-500">△ 未定 ${counts['△']}人</span> 
+                <span class="text-rose-600">× 欠席 ${counts['×']}人</span>
+                <span class="text-stone-400 font-normal">（名簿 ${total}人）</span>
             `;
-            list.insertBefore(summary, list.firstChild);
         });
 
     } catch (e) {
-        console.error("エラー:", e);
-        appDiv.innerHTML = `<div class="text-center text-red-500">読み込みエラーが発生しました。</div>`;
+        appDiv.innerHTML = `<div class="text-center text-rose-500 py-10">読み込みエラーが発生しました。</div>`;
     }
 }
 
