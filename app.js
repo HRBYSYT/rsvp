@@ -24,7 +24,7 @@ const eventId = urlParams.get('id');
 // 背景を少し暗めのグレージュにして、メイン画面をクリーム色に際立たせる
 document.body.className = "bg-[#EFECE6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white";
 const appDiv = document.getElementById('app');
-// メイン画面（白ではなく高級感のあるクリーム色 #FCFBF7 に変更）
+// メイン画面
 appDiv.className = "bg-[#FCFBF7] p-6 md:p-10 shadow-xl border border-stone-200 border-t-[6px] border-t-[#7B2C3A] rounded-sm max-w-3xl mx-auto mt-8 mb-20";
 
 // ==========================================
@@ -231,7 +231,6 @@ async function renderRsvpPage(id) {
         
         const dateStr = formatDateDisplay(eventData.date);
         
-        // 「開始・終了」を削り、時間のみに変更
         let timeStr = '';
         if (eventData.startTime || eventData.endTime) {
             timeStr = `${eventData.startTime || '未定'} 〜 ${eventData.endTime || '未定'}`;
@@ -301,14 +300,8 @@ async function renderRsvpPage(id) {
                 </div>
             </div>
 
-            <!-- 出欠入力フォーム -->
+            <!-- 出欠入力フォーム（名簿登録の見出し削除） -->
             <div class="mb-12 bg-[#F4F1EA] p-6 border border-stone-200 rounded-sm">
-                <div class="text-center mb-6">
-                    <!-- お問い合わせの文字を削除 -->
-                    <div class="inline-block bg-[#7B2C3A] text-white text-sm font-bold px-8 py-2 rounded-sm shadow-sm">名簿登録</div>
-                    <p class="text-xs text-stone-500 mt-3">※名簿にお名前がない方は、お手数ですがこちらからご登録をお願いいたします。</p>
-                </div>
-                
                 <div class="space-y-4 text-sm max-w-xl mx-auto">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -442,7 +435,6 @@ async function renderRsvpPage(id) {
             document.getElementById('submitBtn').disabled = false;
         });
 
-        // リスト内の「出欠プルダウン」と「コメント入力欄」両方の変更をキャッチ
         document.getElementById('rsvpList').addEventListener('change', async (e) => {
             const rsvpId = e.target.getAttribute('data-id');
             if (!rsvpId) return;
@@ -475,24 +467,23 @@ async function renderRsvpPage(id) {
                 if(counts[currentStatus] !== undefined) counts[currentStatus]++;
 
                 const row = document.createElement('div');
-                // クリーム色の背景と馴染むように透明(transparent)をベースにし、ホバーで少し色付け
                 row.className = "grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-3 items-center w-full px-4 py-3 border-b border-stone-200 bg-transparent hover:bg-[#F4F1EA] transition text-sm";
                 
                 const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
 
-                // コメントを自由に編集できる input に変更しました
+                // プルダウンの枠線を消し、テキストのように背景に馴染ませました（ホバー・フォーカス時のみ枠線/背景が表示されます）
                 row.innerHTML = `
                     <div class="md:col-span-4 font-bold text-stone-800 truncate">${fullName}</div>
                     
                     <div class="md:col-span-3 flex md:justify-center">
-                        <div class="relative w-24">
-                            <select class="status-dropdown appearance-none w-full border border-stone-300 rounded-sm py-1.5 pl-3 pr-8 text-sm font-bold bg-white focus:outline-none focus:border-[#7B2C3A] cursor-pointer text-center transition" data-id="${rsvpId}">
+                        <div class="relative w-20">
+                            <select class="status-dropdown appearance-none w-full border-b border-transparent bg-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none py-1 pl-2 pr-6 text-sm font-bold text-stone-800 cursor-pointer text-center transition" data-id="${rsvpId}">
                                 <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
                                 <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
                                 <option value="△" ${currentStatus === '△' ? 'selected' : ''}>△</option>
                                 <option value="×" ${currentStatus === '×' ? 'selected' : ''}>×</option>
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-stone-400">${svgChevron}</div>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-stone-400">${svgChevron}</div>
                         </div>
                     </div>
                     
