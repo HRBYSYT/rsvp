@@ -137,7 +137,7 @@ function renderCreateEventPage() {
         <form autocomplete="off" onsubmit="return false;" class="space-y-6 text-sm">
             <div>
                 <label class="block font-bold mb-2 text-stone-700">イベント名 <span class="text-[#7B2C3A]">*</span></label>
-                <input type="text" id="eventName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="例：カラリスト忘年会 2026">
+                <input type="text" id="eventName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -165,30 +165,41 @@ function renderCreateEventPage() {
                 </div>
             </div>
 
+            <div>
+                <label class="block font-bold mb-2 text-stone-700">参加費</label>
+                <input type="text" id="eventFee" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
+            </div>
+
             <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
                 <div class="mb-4">
                     <label class="block font-bold mb-2 text-stone-700">マップ検索用キーワード</label>
-                    <div class="relative">
-                        <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="場所を検索（例：高輪プリンスホテル）">
-                        <div id="locSuggestions" class="absolute z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="flex-1 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
+                        <button type="button" id="previewMapBtn" class="bg-stone-200 text-stone-700 px-4 py-2 font-bold rounded-sm hover:bg-stone-300 transition whitespace-nowrap">地図を確認</button>
                     </div>
-                    <p class="text-xs text-stone-500 mt-2">※検索して選ぶと、裏側でGoogleマップのピンとして登録されます。</p>
+                    
+                    <!-- プレビューマップの表示エリア -->
+                    <div id="mapPreviewArea" class="mt-3 hidden border border-stone-300 rounded-sm overflow-hidden bg-white">
+                        <iframe id="mapPreviewFrame" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                    
+                    <p class="text-xs text-stone-500 mt-2">※確認ボタンを押すとGoogleマップが表示されます。この場所でピンが登録されます。</p>
                 </div>
                 <div>
                     <label class="block font-bold mb-2 text-stone-700">画面に表示するテキスト <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
-                    <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="例：高輪プリンスホテル 飛天の間">
+                    <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
             </div>
 
             <div>
                 <label class="block font-bold mb-2 text-stone-700">詳細・備考</label>
-                <textarea id="eventDesc" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 h-32 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="会費や待ち合わせ場所などの詳細"></textarea>
+                <textarea id="eventDesc" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 h-32 focus:outline-none focus:border-[#7B2C3A] bg-white transition"></textarea>
             </div>
             
             <div class="border-t border-stone-200 pt-6 mt-6">
                 <label class="block font-bold mb-2 text-[#7B2C3A]">管理用パスワード（数字4桁） <span class="text-[#7B2C3A]">*</span></label>
                 <p class="text-xs text-stone-500 mb-2">※イベント内容の編集・削除時に必要になります。</p>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventPin" name="${rName()}" maxlength="4" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-full md:w-1/3 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] tracking-widest text-lg bg-white transition" placeholder="1234">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventPin" name="${rName()}" maxlength="4" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-full md:w-1/3 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] tracking-widest text-lg bg-white transition text-center">
             </div>
 
             <div class="pt-4">
@@ -203,47 +214,18 @@ function renderCreateEventPage() {
         endSel.innerHTML = generateTimeOptions(endSel.value, startSel.value);
     });
 
-    const locQuery = document.getElementById('eventLocationQuery');
-    const locDisp = document.getElementById('eventLocation');
-    const locSug = document.getElementById('locSuggestions');
-    let locTimeout;
-
-    locQuery.addEventListener('input', (e) => {
-        clearTimeout(locTimeout);
-        const q = e.target.value.trim();
-        if (q.length < 2) {
-            locSug.classList.add('hidden');
-            return;
+    // マッププレビュー機能
+    document.getElementById('previewMapBtn').addEventListener('click', () => {
+        const query = document.getElementById('eventLocationQuery').value.trim();
+        const area = document.getElementById('mapPreviewArea');
+        const frame = document.getElementById('mapPreviewFrame');
+        if (query) {
+            frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+            area.classList.remove('hidden');
+        } else {
+            area.classList.add('hidden');
+            frame.src = '';
         }
-        locTimeout = setTimeout(async () => {
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=jp`);
-                const data = await res.json();
-                if (data.length > 0) {
-                    locSug.innerHTML = data.map(item => {
-                        const name = item.name || item.display_name.split(',')[0];
-                        return `<div class="p-3 hover:bg-[#F9F8F6] cursor-pointer border-b border-stone-100 text-sm text-stone-700 transition" data-name="${name}">
-                                    <div class="font-bold">${name}</div>
-                                    <div class="text-xs text-stone-400 truncate mt-1">${item.display_name}</div>
-                                </div>`;
-                    }).join('');
-                    locSug.classList.remove('hidden');
-                    
-                    locSug.querySelectorAll('div[data-name]').forEach(div => {
-                        div.addEventListener('click', (ev) => {
-                            const selectedName = ev.currentTarget.getAttribute('data-name');
-                            locQuery.value = selectedName;
-                            locDisp.value = selectedName;
-                            locSug.classList.add('hidden');
-                        });
-                    });
-                }
-            } catch(err) {}
-        }, 500);
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!locQuery.contains(e.target) && !locSug.contains(e.target)) locSug.classList.add('hidden');
     });
 
     document.getElementById('createBtn').addEventListener('click', async () => {
@@ -262,8 +244,9 @@ function renderCreateEventPage() {
                 date: document.getElementById('eventDate').value,
                 startTime: document.getElementById('eventStartTime').value,
                 endTime: document.getElementById('eventEndTime').value,
-                locationQuery: locQuery.value,
-                location: locDisp.value,
+                fee: document.getElementById('eventFee').value,
+                locationQuery: document.getElementById('eventLocationQuery').value,
+                location: document.getElementById('eventLocation').value,
                 description: document.getElementById('eventDesc').value,
                 pin: pin,
                 createdAt: serverTimestamp()
@@ -349,6 +332,12 @@ async function renderRsvpPage(id) {
                         <span class="font-bold w-20 text-stone-500 shrink-0">場所</span>
                         <span>${locationHTML}</span>
                     </div>
+                    ${eventData.fee ? `
+                    <div class="flex flex-col md:flex-row md:items-center">
+                        <span class="font-bold w-20 text-stone-500 shrink-0">参加費</span>
+                        <span>${escapeHTML(eventData.fee)}</span>
+                    </div>
+                    ` : ''}
                 </div>
 
                 ${eventData.description ? 
@@ -363,23 +352,48 @@ async function renderRsvpPage(id) {
             <form id="eventEditArea" autocomplete="off" onsubmit="return false;" class="mb-10 hidden bg-[#F4F1EA] p-6 border border-stone-200 rounded-sm">
                 <h2 class="text-lg font-bold mb-4 text-[#7B2C3A] flex items-center">${svgEdit} イベント情報の編集</h2>
                 <div class="space-y-4 text-sm">
-                    <input type="text" id="editName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.name)}">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <input type="date" id="editDate" name="${rName()}" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${eventData.date || ''}">
-                        <select id="editStartTime" name="${rName()}" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white">${generateTimeOptions(eventData.startTime)}</select>
-                        <select id="editEndTime" name="${rName()}" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white">${generateTimeOptions(eventData.endTime, eventData.startTime)}</select>
+                    <div>
+                        <label class="text-xs font-bold text-stone-500">イベント名</label>
+                        <input type="text" id="editName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.name)}">
                     </div>
-                    <div class="grid grid-cols-1 gap-2 p-3 bg-white border border-stone-200">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
-                            <label class="text-xs font-bold text-stone-500">マップ検索用キーワード</label>
-                            <input type="text" id="editLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.locationQuery || '')}">
+                            <label class="text-xs font-bold text-stone-500">日にち</label>
+                            <input type="date" id="editDate" name="${rName()}" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${eventData.date || ''}">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-stone-500 mt-2">画面表示用のテキスト</label>
+                            <label class="text-xs font-bold text-stone-500">開始時間</label>
+                            <select id="editStartTime" name="${rName()}" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white">${generateTimeOptions(eventData.startTime)}</select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-stone-500">終了時間</label>
+                            <select id="editEndTime" name="${rName()}" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white">${generateTimeOptions(eventData.endTime, eventData.startTime)}</select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-stone-500">参加費</label>
+                        <input type="text" id="editFee" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.fee || '')}">
+                    </div>
+                    <div class="grid grid-cols-1 gap-2 p-4 bg-white border border-stone-200">
+                        <div>
+                            <label class="text-xs font-bold text-stone-500">マップ検索用キーワード</label>
+                            <div class="flex gap-2 mb-2">
+                                <input type="text" id="editLocationQuery" name="${rName()}" autocomplete="new-password" class="flex-1 border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.locationQuery || '')}">
+                                <button type="button" id="editPreviewMapBtn" class="bg-stone-200 text-stone-700 px-3 py-1 font-bold rounded-sm hover:bg-stone-300 transition whitespace-nowrap text-xs">地図を確認</button>
+                            </div>
+                            <div id="editMapPreviewArea" class="mt-2 hidden border border-stone-300 rounded-sm overflow-hidden bg-white">
+                                <iframe id="editMapPreviewFrame" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <label class="text-xs font-bold text-stone-500">画面表示用のテキスト</label>
                             <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.location || '')}">
                         </div>
                     </div>
-                    <textarea id="editDesc" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 h-24 focus:outline-none focus:border-[#7B2C3A] bg-white">${escapeHTML(eventData.description || '')}</textarea>
+                    <div>
+                        <label class="text-xs font-bold text-stone-500">詳細・備考</label>
+                        <textarea id="editDesc" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 h-24 focus:outline-none focus:border-[#7B2C3A] bg-white">${escapeHTML(eventData.description || '')}</textarea>
+                    </div>
                     <div class="flex gap-3 pt-2">
                         <button id="saveEditBtn" type="button" class="flex-1 bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition">保存する</button>
                         <button id="cancelEditBtn" type="button" class="bg-stone-300 px-6 py-3 rounded-sm font-bold text-stone-700 hover:bg-stone-400 transition">キャンセル</button>
@@ -395,10 +409,10 @@ async function renderRsvpPage(id) {
                 <div class="space-y-4 text-sm max-w-xl mx-auto">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <input type="text" id="regLastName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="姓（例：山田）">
+                            <input type="text" id="regLastName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="姓">
                         </div>
                         <div>
-                            <input type="text" id="regFirstName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="名（例：太郎）">
+                            <input type="text" id="regFirstName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="名">
                         </div>
                     </div>
                     
@@ -416,7 +430,7 @@ async function renderRsvpPage(id) {
                     </div>
                     
                     <div>
-                        <input type="text" id="regGuestComment" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="備考（任意）">
+                        <input type="text" id="regGuestComment" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="備考">
                     </div>
                     <button id="submitBtn" type="button" class="w-full bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition shadow-sm">リストに追加する</button>
                 </div>
@@ -478,6 +492,20 @@ async function renderRsvpPage(id) {
             }
         });
 
+        // 編集エリアのマッププレビュー機能
+        document.getElementById('editPreviewMapBtn').addEventListener('click', () => {
+            const query = document.getElementById('editLocationQuery').value.trim();
+            const area = document.getElementById('editMapPreviewArea');
+            const frame = document.getElementById('editMapPreviewFrame');
+            if (query) {
+                frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+                area.classList.remove('hidden');
+            } else {
+                area.classList.add('hidden');
+                frame.src = '';
+            }
+        });
+
         const editStart = document.getElementById('editStartTime');
         const editEnd = document.getElementById('editEndTime');
         editStart.addEventListener('change', () => {
@@ -513,6 +541,7 @@ async function renderRsvpPage(id) {
                     date: document.getElementById('editDate').value,
                     startTime: document.getElementById('editStartTime').value,
                     endTime: document.getElementById('editEndTime').value,
+                    fee: document.getElementById('editFee').value,
                     locationQuery: document.getElementById('editLocationQuery').value,
                     location: document.getElementById('editLocation').value,
                     description: document.getElementById('editDesc').value
@@ -575,7 +604,7 @@ async function renderRsvpPage(id) {
             document.getElementById('toggleRegBtn').textContent = "＋ 新規名簿登録";
         });
 
-        document.getElementById('rsvpList').addEventListener('change', async (e) => {
+        document.getElementById('rsvpListForm').addEventListener('change', async (e) => {
             const rsvpId = e.target.getAttribute('data-id');
             if (!rsvpId) return;
 
