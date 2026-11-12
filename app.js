@@ -1,6 +1,6 @@
 // Firebase SDKのインポート
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDoc, doc, onSnapshot, serverTimestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDoc, doc, onSnapshot, serverTimestamp, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ==========================================
 // Firebase設定
@@ -133,8 +133,7 @@ function renderCreateEventPage() {
     const startSel = document.getElementById('eventStartTime');
     const endSel = document.getElementById('eventEndTime');
     startSel.addEventListener('change', () => {
-        const currentEnd = endSel.value;
-        endSel.innerHTML = generateTimeOptions(currentEnd, startSel.value);
+        endSel.innerHTML = generateTimeOptions(endSel.value, startSel.value);
     });
 
     const locQuery = document.getElementById('eventLocationQuery');
@@ -215,8 +214,7 @@ function renderCreateEventPage() {
 // ------------------------------------------
 async function renderRsvpPage(id) {
     appDiv.innerHTML = `<div class="text-center text-stone-500 py-10">読み込み中...</div>`;
-
-    let rsvpDataList = []; // リスト描画用のデータを一時保存する配列
+    let rsvpDataList = [];
 
     try {
         const eventSnap = await getDoc(doc(db, "events", id));
@@ -227,8 +225,31 @@ async function renderRsvpPage(id) {
         }
 
         const eventData = eventSnap.data();
-        const eventUrl = window.location.href;
         
+        // ------------------------------------------
+        // 60日経過の自動削除チェック
+        // ------------------------------------------
+        if (eventData.date) {
+            const eDate = new Date(eventData.date);
+            const now = new Date();
+            const diffTime = now.getTime() - eDate.getTime();
+            const diffDays = diffTime / (1000 * 3600 * 24);
+            
+            if (diffDays > 60) {
+                // サブコレクション（名簿）を先に削除してクリーンアップ
+                const rsvpSnaps = await getDocs(collection(db, "events", id, "rsvps"));
+                rsvpSnaps.forEach(async (d) => {
+                    await deleteDoc(doc(db, "events", id, "rsvps", d.id));
+                });
+                // イベント本体を削除
+                await deleteDoc(doc(db, "events", id));
+                alert("予定日から60日以上経過したため、イベントデータは自動削除されました。");
+                window.location.href = "?";
+                return;
+            }
+        }
+
+        const eventUrl = window.location.href;
         const dateStr = formatDateDisplay(eventData.date);
         
         let timeStr = '';
@@ -240,8 +261,9 @@ async function renderRsvpPage(id) {
         let locationHTML = '未定';
         if (eventData.location) {
             if (targetQuery) {
+                // マップURLがある場合は青色で下線を引く
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(targetQuery)}`;
-                locationHTML = `<a href="${mapUrl}" target="_blank" class="text-stone-800 hover:text-[#7B2C3A] hover:underline underline-offset-4 transition">${escapeHTML(eventData.location)}</a>`;
+                locationHTML = `<a href="${mapUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.location)}</a>`;
             } else {
                 locationHTML = escapeHTML(eventData.location);
             }
@@ -258,7 +280,7 @@ async function renderRsvpPage(id) {
                         <span>${escapeHTML(dateStr)} ${escapeHTML(timeStr)}</span>
                     </div>
                     <div class="flex flex-col md:flex-row md:items-start">
-                        <span class="font-bold w-20 text-stone-500 shrink-0">会場</span>
+                        <span class="font-bold w-20 text-stone-500 shrink-0">場所</span>
                         <span>${locationHTML}</span>
                     </div>
                 </div>
@@ -300,11 +322,14 @@ async function renderRsvpPage(id) {
                 </div>
             </div>
 
-            <!-- 出欠入力フォーム -->
-            <div class="mb-12 bg-[#F4F1EA] p-6 border border-stone-200 rounded-sm">
+            <!-- 新規名簿登録アコーディオン（開閉ボタン） -->
+            <div class="mb-4 text-center">
+                <button id="toggleRegBtn" class="bg-[#7B2C3A] text-white text-sm font-bold px-8 py-3 rounded-sm shadow-md hover:bg-[#5A1F29] transition tracking-widest">＋ 新規名簿登録</button>
+            </div>
+            
+            <!-- 出欠入力フォーム本体（初期状態は hidden で隠す） -->
+            <div id="registrationForm" class="mb-12 bg-[#F4F1EA] p-6 border border-stone-200 rounded-sm hidden transition-all duration-300">
                 <div class="space-y-4 text-sm max-w-xl mx-auto">
-                    <p class="text-xs text-stone-500 mb-4 text-center">※名簿にお名前がない方は、お手数ですがこちらからご登録をお願いいたします。</p>
-                    
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <input type="text" id="lastName" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="姓（例：山田）">
@@ -314,7 +339,6 @@ async function renderRsvpPage(id) {
                         </div>
                     </div>
                     
-                    <!-- 性別のラジオボタンを追加 -->
                     <div class="bg-white p-3 border border-stone-200 flex justify-center gap-6">
                         <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="gender" value="男" checked class="accent-[#7B2C3A]"> 男</label>
                         <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="gender" value="女" class="accent-[#7B2C3A]"> 女</label>
@@ -342,7 +366,6 @@ async function renderRsvpPage(id) {
                     <div id="summaryArea" class="text-sm font-bold text-stone-600 flex flex-wrap gap-4"></div>
                 </div>
                 
-                <!-- リストの絞り込み用チェックボックス -->
                 <div class="mt-4 pt-3 border-t border-stone-200 flex items-center gap-4 text-sm text-stone-600 font-bold">
                     <span class="text-xs text-stone-400 font-normal">表示:</span>
                     <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterMale" checked class="accent-[#7B2C3A]"> 男</label>
@@ -351,9 +374,8 @@ async function renderRsvpPage(id) {
                 </div>
             </div>
             
-            <p class="text-xs text-stone-500 mb-3">自分の行の「出欠」や「コメント」はいつでもクリックして編集できます。</p>
+            <p class="text-xs text-stone-500 mb-3">自分の行の「出欠」や「コメント」「お名前」はいつでもクリックして編集できます。</p>
             
-            <!-- リストヘッダー -->
             <div class="hidden md:grid grid-cols-12 gap-3 mb-1 px-4 py-2 bg-[#F4F1EA] border border-stone-300 text-xs font-bold text-stone-700">
                 <div class="col-span-4">お名前</div>
                 <div class="col-span-3 text-center">出欠</div>
@@ -372,6 +394,18 @@ async function renderRsvpPage(id) {
             navigator.clipboard.writeText(eventUrl);
             document.getElementById('copyBtn').textContent = "コピー済";
             setTimeout(() => document.getElementById('copyBtn').textContent = "URLをコピー", 2000);
+        });
+        
+        // 登録フォームの開閉アコーディオン機能
+        document.getElementById('toggleRegBtn').addEventListener('click', () => {
+            const form = document.getElementById('registrationForm');
+            const btn = document.getElementById('toggleRegBtn');
+            form.classList.toggle('hidden');
+            if(form.classList.contains('hidden')) {
+                btn.textContent = "＋ 新規名簿登録";
+            } else {
+                btn.textContent = "－ 閉じる";
+            }
         });
 
         const editStart = document.getElementById('editStartTime');
@@ -457,8 +491,13 @@ async function renderRsvpPage(id) {
             document.querySelector('input[name="gender"][value="男"]').checked = true;
             document.getElementById('submitBtn').textContent = "リストに追加する";
             document.getElementById('submitBtn').disabled = false;
+            
+            // 追加後にフォームを閉じる
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('toggleRegBtn').textContent = "＋ 新規名簿登録";
         });
 
+        // 氏名・出欠・コメントの変更をすべてキャッチ
         document.getElementById('rsvpList').addEventListener('change', async (e) => {
             const rsvpId = e.target.getAttribute('data-id');
             if (!rsvpId) return;
@@ -467,10 +506,13 @@ async function renderRsvpPage(id) {
                 await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { status: e.target.value });
             } else if (e.target.classList.contains('comment-input')) {
                 await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { comment: e.target.value });
+            } else if (e.target.classList.contains('last-name-input')) {
+                await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { lastName: e.target.value });
+            } else if (e.target.classList.contains('first-name-input')) {
+                await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { firstName: e.target.value });
             }
         });
 
-        // フィルター変更時に再描画するイベント
         const filters = ['filterMale', 'filterFemale', 'filterOther'];
         filters.forEach(f => document.getElementById(f).addEventListener('change', renderListDOM));
 
@@ -482,7 +524,6 @@ async function renderRsvpPage(id) {
             renderListDOM();
         });
 
-        // リストをDOMに描画する関数（フィルター機能対応）
         function renderListDOM() {
             const list = document.getElementById('rsvpList');
             const summaryArea = document.getElementById('summaryArea');
@@ -491,12 +532,19 @@ async function renderRsvpPage(id) {
             const showFemale = document.getElementById('filterFemale').checked;
             const showOther = document.getElementById('filterOther').checked;
 
+            // 性別順（男1、女2、その他3）にソート
+            const genderOrder = { '男': 1, '女': 2, 'その他': 3 };
+            rsvpDataList.sort((a, b) => {
+                const gA = genderOrder[a.gender || 'その他'] || 3;
+                const gB = genderOrder[b.gender || 'その他'] || 3;
+                return gA - gB;
+            });
+
             list.innerHTML = '';
             let counts = { '-': 0, '〇': 0, '△': 0, '×': 0 };
             let visibleTotal = 0;
 
             rsvpDataList.forEach((data) => {
-                // 性別によるフィルタリング判定（過去のデータで性別がない場合は「その他」として扱う）
                 const gender = data.gender || 'その他';
                 if (gender === '男' && !showMale) return;
                 if (gender === '女' && !showFemale) return;
@@ -515,11 +563,15 @@ async function renderRsvpPage(id) {
                 const row = document.createElement('div');
                 row.className = "grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-3 items-center w-full px-4 py-3 border-b border-stone-200 bg-transparent hover:bg-[#F4F1EA] transition text-sm";
                 
-                const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
-                const genderDisp = `<span class="text-[10px] text-stone-400 font-normal ml-1">(${escapeHTML(gender)})</span>`;
+                const genderDisp = `<span class="text-[10px] text-stone-400 font-normal shrink-0">(${escapeHTML(gender)})</span>`;
 
+                // 氏名もインラインで編集できる input タグに変更
                 row.innerHTML = `
-                    <div class="md:col-span-4 font-bold text-stone-800 truncate">${fullName} ${genderDisp}</div>
+                    <div class="md:col-span-4 flex items-center gap-1 pr-2">
+                        <input type="text" class="last-name-input flex-1 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
+                        <input type="text" class="first-name-input flex-1 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
+                        ${genderDisp}
+                    </div>
                     
                     <div class="md:col-span-3 flex md:justify-center">
                         <div class="relative w-20">
