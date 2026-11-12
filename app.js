@@ -21,10 +21,8 @@ const db = getFirestore(app);
 const urlParams = new URLSearchParams(window.location.search);
 const eventId = urlParams.get('id');
 
-// 背景を少し暗めのグレージュにして、メイン画面をクリーム色に際立たせる
 document.body.className = "bg-[#EFECE6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white";
 const appDiv = document.getElementById('app');
-// メイン画面
 appDiv.className = "bg-[#FCFBF7] p-6 md:p-10 shadow-xl border border-stone-200 border-t-[6px] border-t-[#7B2C3A] rounded-sm max-w-3xl mx-auto mt-8 mb-20";
 
 // ==========================================
@@ -218,6 +216,8 @@ function renderCreateEventPage() {
 async function renderRsvpPage(id) {
     appDiv.innerHTML = `<div class="text-center text-stone-500 py-10">読み込み中...</div>`;
 
+    let rsvpDataList = []; // リスト描画用のデータを一時保存する配列
+
     try {
         const eventSnap = await getDoc(doc(db, "events", id));
         if (!eventSnap.exists()) {
@@ -300,9 +300,11 @@ async function renderRsvpPage(id) {
                 </div>
             </div>
 
-            <!-- 出欠入力フォーム（名簿登録の見出し削除） -->
+            <!-- 出欠入力フォーム -->
             <div class="mb-12 bg-[#F4F1EA] p-6 border border-stone-200 rounded-sm">
                 <div class="space-y-4 text-sm max-w-xl mx-auto">
+                    <p class="text-xs text-stone-500 mb-4 text-center">※名簿にお名前がない方は、お手数ですがこちらからご登録をお願いいたします。</p>
+                    
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <input type="text" id="lastName" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="姓（例：山田）">
@@ -311,12 +313,21 @@ async function renderRsvpPage(id) {
                             <input type="text" id="firstName" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="名（例：太郎）">
                         </div>
                     </div>
+                    
+                    <!-- 性別のラジオボタンを追加 -->
+                    <div class="bg-white p-3 border border-stone-200 flex justify-center gap-6">
+                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="gender" value="男" checked class="accent-[#7B2C3A]"> 男</label>
+                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="gender" value="女" class="accent-[#7B2C3A]"> 女</label>
+                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="gender" value="その他" class="accent-[#7B2C3A]"> その他</label>
+                    </div>
+
                     <div class="bg-white p-3 border border-stone-200 flex justify-center gap-6">
                         <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="status" value="-" checked class="accent-[#7B2C3A]"> ${svgDash}</label>
                         <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="status" value="〇" class="accent-[#7B2C3A]"> ${svgMaru}</label>
                         <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="status" value="△" class="accent-[#7B2C3A]"> ${svgSankaku}</label>
                         <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="status" value="×" class="accent-[#7B2C3A]"> ${svgBatsu}</label>
                     </div>
+                    
                     <div>
                         <input type="text" id="guestComment" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="備考（任意）">
                     </div>
@@ -324,10 +335,20 @@ async function renderRsvpPage(id) {
                 </div>
             </div>
 
-            <!-- 出欠リスト -->
-            <div class="mb-4 flex items-end justify-between border-b-2 border-stone-300 pb-2">
-                <h2 class="text-lg font-bold text-stone-800 tracking-wider">名簿</h2>
-                <div id="summaryArea" class="text-sm font-bold text-stone-600 flex gap-4"></div>
+            <!-- 出欠リストとフィルター -->
+            <div class="mb-4 border-b-2 border-stone-300 pb-2">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <h2 class="text-lg font-bold text-stone-800 tracking-wider">名簿</h2>
+                    <div id="summaryArea" class="text-sm font-bold text-stone-600 flex flex-wrap gap-4"></div>
+                </div>
+                
+                <!-- リストの絞り込み用チェックボックス -->
+                <div class="mt-4 pt-3 border-t border-stone-200 flex items-center gap-4 text-sm text-stone-600 font-bold">
+                    <span class="text-xs text-stone-400 font-normal">表示:</span>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterMale" checked class="accent-[#7B2C3A]"> 男</label>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterFemale" checked class="accent-[#7B2C3A]"> 女</label>
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterOther" checked class="accent-[#7B2C3A]"> その他</label>
+                </div>
             </div>
             
             <p class="text-xs text-stone-500 mb-3">自分の行の「出欠」や「コメント」はいつでもクリックして編集できます。</p>
@@ -412,6 +433,7 @@ async function renderRsvpPage(id) {
             const lastName = document.getElementById('lastName').value.trim();
             const firstName = document.getElementById('firstName').value.trim();
             const status = document.querySelector('input[name="status"]:checked').value;
+            const gender = document.querySelector('input[name="gender"]:checked')?.value || 'その他';
             const comment = document.getElementById('guestComment').value;
 
             if (!lastName && !firstName) return alert("姓名のどちらかは入力してください");
@@ -422,6 +444,7 @@ async function renderRsvpPage(id) {
             await addDoc(collection(db, "events", id, "rsvps"), {
                 lastName: lastName,
                 firstName: firstName,
+                gender: gender,
                 status: status,
                 comment: comment,
                 createdAt: serverTimestamp()
@@ -431,6 +454,7 @@ async function renderRsvpPage(id) {
             document.getElementById('firstName').value = '';
             document.getElementById('guestComment').value = '';
             document.querySelector('input[name="status"][value="-"]').checked = true;
+            document.querySelector('input[name="gender"][value="男"]').checked = true;
             document.getElementById('submitBtn').textContent = "リストに追加する";
             document.getElementById('submitBtn').disabled = false;
         });
@@ -446,17 +470,39 @@ async function renderRsvpPage(id) {
             }
         });
 
+        // フィルター変更時に再描画するイベント
+        const filters = ['filterMale', 'filterFemale', 'filterOther'];
+        filters.forEach(f => document.getElementById(f).addEventListener('change', renderListDOM));
+
         onSnapshot(collection(db, "events", id, "rsvps"), (snapshot) => {
+            rsvpDataList = [];
+            snapshot.forEach((docSnap) => {
+                rsvpDataList.push({ id: docSnap.id, ...docSnap.data() });
+            });
+            renderListDOM();
+        });
+
+        // リストをDOMに描画する関数（フィルター機能対応）
+        function renderListDOM() {
             const list = document.getElementById('rsvpList');
             const summaryArea = document.getElementById('summaryArea');
+            
+            const showMale = document.getElementById('filterMale').checked;
+            const showFemale = document.getElementById('filterFemale').checked;
+            const showOther = document.getElementById('filterOther').checked;
+
             list.innerHTML = '';
             let counts = { '-': 0, '〇': 0, '△': 0, '×': 0 };
-            let total = 0;
+            let visibleTotal = 0;
 
-            snapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                const rsvpId = docSnap.id;
-                total++;
+            rsvpDataList.forEach((data) => {
+                // 性別によるフィルタリング判定（過去のデータで性別がない場合は「その他」として扱う）
+                const gender = data.gender || 'その他';
+                if (gender === '男' && !showMale) return;
+                if (gender === '女' && !showFemale) return;
+                if (gender === 'その他' && !showOther) return;
+
+                visibleTotal++;
                 
                 let currentStatus = data.status;
                 if(currentStatus.includes('〇')) currentStatus = '〇';
@@ -470,14 +516,14 @@ async function renderRsvpPage(id) {
                 row.className = "grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-3 items-center w-full px-4 py-3 border-b border-stone-200 bg-transparent hover:bg-[#F4F1EA] transition text-sm";
                 
                 const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
+                const genderDisp = `<span class="text-[10px] text-stone-400 font-normal ml-1">(${escapeHTML(gender)})</span>`;
 
-                // プルダウンの枠線を消し、テキストのように背景に馴染ませました（ホバー・フォーカス時のみ枠線/背景が表示されます）
                 row.innerHTML = `
-                    <div class="md:col-span-4 font-bold text-stone-800 truncate">${fullName}</div>
+                    <div class="md:col-span-4 font-bold text-stone-800 truncate">${fullName} ${genderDisp}</div>
                     
                     <div class="md:col-span-3 flex md:justify-center">
                         <div class="relative w-20">
-                            <select class="status-dropdown appearance-none w-full border-b border-transparent bg-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none py-1 pl-2 pr-6 text-sm font-bold text-stone-800 cursor-pointer text-center transition" data-id="${rsvpId}">
+                            <select class="status-dropdown appearance-none w-full border-b border-transparent bg-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none py-1 pl-2 pr-6 text-sm font-bold text-stone-800 cursor-pointer text-center transition" data-id="${data.id}">
                                 <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
                                 <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
                                 <option value="△" ${currentStatus === '△' ? 'selected' : ''}>△</option>
@@ -488,7 +534,7 @@ async function renderRsvpPage(id) {
                     </div>
                     
                     <div class="md:col-span-5 relative">
-                        <input type="text" class="comment-input w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-xs md:text-sm py-1 transition" data-id="${rsvpId}" value="${escapeHTML(data.comment || '')}" placeholder="クリックしてコメントを編集">
+                        <input type="text" class="comment-input w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-xs md:text-sm py-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="クリックしてコメントを編集">
                     </div>
                 `;
                 list.appendChild(row);
@@ -498,9 +544,9 @@ async function renderRsvpPage(id) {
                 <span class="text-emerald-600">〇 参加 ${counts['〇']}人</span> 
                 <span class="text-amber-500">△ 未定 ${counts['△']}人</span> 
                 <span class="text-rose-600">× 欠席 ${counts['×']}人</span>
-                <span class="text-stone-400 font-normal">（名簿 ${total}人）</span>
+                <span class="text-stone-400 font-normal ml-2">（表示中 ${visibleTotal}人）</span>
             `;
-        });
+        }
 
     } catch (e) {
         appDiv.innerHTML = `<div class="text-center text-rose-500 py-10">読み込みエラーが発生しました。</div>`;
