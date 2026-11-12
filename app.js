@@ -167,7 +167,10 @@ function renderCreateEventPage() {
 
             <div>
                 <label class="block font-bold mb-2 text-stone-700">参加費</label>
-                <input type="text" id="eventFee" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
+                <div class="flex items-center gap-2">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventFee" name="${rName()}" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-1/3 md:w-1/4 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition text-right">
+                    <span class="text-stone-700 font-bold">円</span>
+                </div>
             </div>
 
             <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
@@ -178,12 +181,11 @@ function renderCreateEventPage() {
                         <button type="button" id="previewMapBtn" class="bg-stone-200 text-stone-700 px-4 py-2 font-bold rounded-sm hover:bg-stone-300 transition whitespace-nowrap">地図を確認</button>
                     </div>
                     
-                    <!-- プレビューマップの表示エリア -->
                     <div id="mapPreviewArea" class="mt-3 hidden border border-stone-300 rounded-sm overflow-hidden bg-white">
                         <iframe id="mapPreviewFrame" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                     </div>
                     
-                    <p class="text-xs text-stone-500 mt-2">※確認ボタンを押すとGoogleマップが表示されます。この場所でピンが登録されます。</p>
+                    <p class="text-xs text-stone-500 mt-2">※確認ボタンを押すとGoogleマップが表示され、この場所でピンが登録されます。</p>
                 </div>
                 <div>
                     <label class="block font-bold mb-2 text-stone-700">画面に表示するテキスト <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
@@ -214,14 +216,18 @@ function renderCreateEventPage() {
         endSel.innerHTML = generateTimeOptions(endSel.value, startSel.value);
     });
 
-    // マッププレビュー機能
     document.getElementById('previewMapBtn').addEventListener('click', () => {
         const query = document.getElementById('eventLocationQuery').value.trim();
+        const dispInput = document.getElementById('eventLocation');
         const area = document.getElementById('mapPreviewArea');
         const frame = document.getElementById('mapPreviewFrame');
         if (query) {
             frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
             area.classList.remove('hidden');
+            // 地図確認時に、表示用テキストが空なら自動で同じものを入れる
+            if (!dispInput.value.trim()) {
+                dispInput.value = query;
+            }
         } else {
             area.classList.add('hidden');
             frame.src = '';
@@ -238,13 +244,16 @@ function renderCreateEventPage() {
         document.getElementById('createBtn').textContent = "作成中...";
         document.getElementById('createBtn').disabled = true;
 
+        const feeValue = document.getElementById('eventFee').value;
+        const formattedFee = feeValue ? `${feeValue}円` : '';
+
         try {
             const docRef = await addDoc(collection(db, "events"), {
                 name: name,
                 date: document.getElementById('eventDate').value,
                 startTime: document.getElementById('eventStartTime').value,
                 endTime: document.getElementById('eventEndTime').value,
-                fee: document.getElementById('eventFee').value,
+                fee: formattedFee,
                 locationQuery: document.getElementById('eventLocationQuery').value,
                 location: document.getElementById('eventLocation').value,
                 description: document.getElementById('eventDesc').value,
@@ -372,7 +381,10 @@ async function renderRsvpPage(id) {
                     </div>
                     <div>
                         <label class="text-xs font-bold text-stone-500">参加費</label>
-                        <input type="text" id="editFee" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.fee || '')}">
+                        <div class="flex items-center gap-2">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" id="editFee" name="${rName()}" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-1/3 md:w-1/4 border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white text-right" value="${escapeHTML(eventData.fee ? eventData.fee.replace('円','') : '')}">
+                            <span class="text-stone-700 font-bold">円</span>
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 gap-2 p-4 bg-white border border-stone-200">
                         <div>
@@ -492,14 +504,17 @@ async function renderRsvpPage(id) {
             }
         });
 
-        // 編集エリアのマッププレビュー機能
         document.getElementById('editPreviewMapBtn').addEventListener('click', () => {
             const query = document.getElementById('editLocationQuery').value.trim();
+            const dispInput = document.getElementById('editLocation');
             const area = document.getElementById('editMapPreviewArea');
             const frame = document.getElementById('editMapPreviewFrame');
             if (query) {
                 frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
                 area.classList.remove('hidden');
+                if (!dispInput.value.trim()) {
+                    dispInput.value = query;
+                }
             } else {
                 area.classList.add('hidden');
                 frame.src = '';
@@ -534,6 +549,9 @@ async function renderRsvpPage(id) {
             const newName = document.getElementById('editName').value;
             if (!newName) return await showModal('alert', 'エラー', 'イベント名を入力してください。');
             
+            const feeValue = document.getElementById('editFee').value;
+            const formattedFee = feeValue ? `${feeValue}円` : '';
+            
             document.getElementById('saveEditBtn').textContent = "保存中...";
             try {
                 await updateDoc(doc(db, "events", id), {
@@ -541,7 +559,7 @@ async function renderRsvpPage(id) {
                     date: document.getElementById('editDate').value,
                     startTime: document.getElementById('editStartTime').value,
                     endTime: document.getElementById('editEndTime').value,
-                    fee: document.getElementById('editFee').value,
+                    fee: formattedFee,
                     locationQuery: document.getElementById('editLocationQuery').value,
                     location: document.getElementById('editLocation').value,
                     description: document.getElementById('editDesc').value
