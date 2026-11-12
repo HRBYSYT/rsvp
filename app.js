@@ -23,27 +23,39 @@ const eventId = urlParams.get('id');
 const appDiv = document.getElementById('app');
 
 // ==========================================
-// 各種SVGアイコン
+// 各種SVGアイコン（サイズと線を完全に統一）
 // ==========================================
 const svgChevron = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
 const svgCalendar = `<svg class="w-5 h-5 inline-block mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>`;
 const svgMapPin = `<svg class="w-5 h-5 inline-block mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>`;
 const svgDoc = `<svg class="w-5 h-5 inline-block mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
 const svgEdit = `<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
-const svgSearch = `<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>`;
-const svgList = `<svg class="w-5 h-5 inline-block mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>`;
 
-// 時間のプルダウンを生成する関数（デフォルト未選択）
-function generateTimeOptions(defaultTime) {
+// 出欠用SVGアイコン（20x20で統一）
+const svgMaru = `<svg viewBox="0 0 24 24" class="w-5 h-5 inline-block text-green-500" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="8"></circle></svg>`;
+const svgSankaku = `<svg viewBox="0 0 24 24" class="w-5 h-5 inline-block text-yellow-500" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 4L3 19h18L12 4z" stroke-linejoin="round"></path></svg>`;
+const svgBatsu = `<svg viewBox="0 0 24 24" class="w-5 h-5 inline-block text-red-500" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 7l10 10M17 7L7 17" stroke-linecap="round"></path></svg>`;
+const svgDash = `<svg viewBox="0 0 24 24" class="w-5 h-5 inline-block text-gray-400" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 12h12" stroke-linecap="round"></path></svg>`;
+
+// 時間のプルダウンを生成する関数（minTime以降のみ生成）
+function generateTimeOptions(defaultTime, minTime = null) {
     let options = `<option value="">未選択</option>`;
     for (let h = 0; h < 24; h++) {
         for (let m = 0; m < 60; m += 30) {
             let time = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            if (minTime && time <= minTime) continue; // 開始時間以前の選択肢を除外
             let selected = time === defaultTime ? 'selected' : '';
             options += `<option value="${time}" ${selected}>${time}</option>`;
         }
     }
     return options;
+}
+
+// 日付フォーマット変換（YYYY-MM-DD -> YYYY年MM月DD日）
+function formatDateDisplay(dateStr) {
+    if (!dateStr) return '未定';
+    const [y, m, d] = dateStr.split('-');
+    return `${y}年${parseInt(m, 10)}月${parseInt(d, 10)}日`;
 }
 
 if (!eventId) {
@@ -61,7 +73,6 @@ function renderCreateEventPage() {
         <div class="space-y-4">
             <div>
                 <label class="block text-sm font-medium mb-1">イベント名 <span class="text-red-500">*</span></label>
-                <!-- autocomplete="new-password" でキャッシュを無効化 -->
                 <input type="text" id="eventName" autocomplete="new-password" class="w-full border rounded p-2 focus:ring focus:ring-indigo-200" placeholder="例：2024年 忘年会">
             </div>
             
@@ -92,13 +103,12 @@ function renderCreateEventPage() {
 
             <div>
                 <label class="block text-sm font-medium mb-1">場所</label>
-                <div class="flex gap-2">
-                    <input type="text" id="eventLocation" autocomplete="new-password" class="flex-1 border rounded p-2 focus:ring focus:ring-indigo-200" placeholder="例：新宿〇〇居酒屋">
-                    <button type="button" id="searchMapBtn" class="bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300 flex items-center whitespace-nowrap text-sm font-bold">
-                        ${svgSearch} マップ検索
-                    </button>
+                <div class="relative">
+                    <input type="text" id="eventLocation" autocomplete="new-password" class="w-full border rounded p-2 focus:ring focus:ring-indigo-200" placeholder="場所の名前を入力して検索...">
+                    <!-- 検索結果のサジェストリスト -->
+                    <div id="locSuggestions" class="absolute z-10 w-full bg-white border rounded shadow-lg max-h-48 overflow-y-auto hidden"></div>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">※場所名を入力して登録すると、自動的にGoogleマップのURLが埋め込まれます。</p>
+                <p class="text-xs text-gray-500 mt-1">※場所を入力すると候補が出ます。登録するとGoogleマップが自動で紐づきます。</p>
             </div>
 
             <div>
@@ -115,11 +125,61 @@ function renderCreateEventPage() {
         </div>
     `;
 
-    // マップ検索ボタンの挙動
-    document.getElementById('searchMapBtn').addEventListener('click', () => {
-        const loc = document.getElementById('eventLocation').value.trim();
-        if (!loc) return alert("場所を入力してください");
-        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`, '_blank');
+    // 開始時間変更時に終了時間のプルダウンを制御
+    const startSel = document.getElementById('eventStartTime');
+    const endSel = document.getElementById('eventEndTime');
+    startSel.addEventListener('change', () => {
+        const currentEnd = endSel.value;
+        endSel.innerHTML = generateTimeOptions(currentEnd, startSel.value);
+    });
+
+    // 場所のサジェスト（候補）検索機能 (OpenStreetMap Nominatim APIを使用)
+    const locInput = document.getElementById('eventLocation');
+    const locSug = document.getElementById('locSuggestions');
+    let locTimeout;
+
+    locInput.addEventListener('input', (e) => {
+        clearTimeout(locTimeout);
+        const q = e.target.value.trim();
+        if (q.length < 2) {
+            locSug.classList.add('hidden');
+            return;
+        }
+        locTimeout = setTimeout(async () => {
+            try {
+                // 日本国内に絞って検索
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=jp`);
+                const data = await res.json();
+                if (data.length > 0) {
+                    locSug.innerHTML = data.map(item => `
+                        <div class="p-2 hover:bg-indigo-50 cursor-pointer border-b text-sm text-gray-700" data-name="${item.name || item.display_name.split(',')[0]}">
+                            <div class="font-bold">${item.name || item.display_name.split(',')[0]}</div>
+                            <div class="text-xs text-gray-500 truncate">${item.display_name}</div>
+                        </div>
+                    `).join('');
+                    locSug.classList.remove('hidden');
+                    
+                    locSug.querySelectorAll('div[data-name]').forEach(div => {
+                        div.addEventListener('click', (ev) => {
+                            locInput.value = ev.currentTarget.getAttribute('data-name');
+                            locSug.classList.add('hidden');
+                        });
+                    });
+                } else {
+                    locSug.innerHTML = `<div class="p-2 text-sm text-gray-500">候補が見つかりません。このまま入力を使用できます。</div>`;
+                    locSug.classList.remove('hidden');
+                }
+            } catch(err) {
+                console.error(err);
+            }
+        }, 500); // タイピング後0.5秒で検索
+    });
+
+    // 余白クリックでサジェストを閉じる
+    document.addEventListener('click', (e) => {
+        if (!locInput.contains(e.target) && !locSug.contains(e.target)) {
+            locSug.classList.add('hidden');
+        }
     });
 
     document.getElementById('createBtn').addEventListener('click', async () => {
@@ -170,8 +230,9 @@ async function renderRsvpPage(id) {
         const eventData = eventSnap.data();
         const eventUrl = window.location.href;
         
-        const dateStr = eventData.date ? eventData.date : '未定';
-        const timeStr = (eventData.startTime && eventData.endTime) ? `${eventData.startTime} 〜 ${eventData.endTime}` : '';
+        const dateStr = formatDateDisplay(eventData.date);
+        const timeStr = (eventData.startTime || eventData.endTime) ? 
+                        `${eventData.startTime || '未定'} 〜 ${eventData.endTime || '未定'}` : '';
         
         let locationHTML = '未定';
         if (eventData.location) {
@@ -208,18 +269,11 @@ async function renderRsvpPage(id) {
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">${svgChevron}</div>
                         </div>
                         <div class="relative">
-                            <select id="editEndTime" class="appearance-none w-full border rounded p-2 bg-white pr-8">${generateTimeOptions(eventData.endTime)}</select>
+                            <select id="editEndTime" class="appearance-none w-full border rounded p-2 bg-white pr-8">${generateTimeOptions(eventData.endTime, eventData.startTime)}</select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">${svgChevron}</div>
                         </div>
                     </div>
-                    
-                    <div class="flex gap-2">
-                        <input type="text" id="editLocation" autocomplete="new-password" class="flex-1 border rounded p-2 bg-white" value="${escapeHTML(eventData.location || '')}" placeholder="場所">
-                        <button type="button" id="editSearchMapBtn" class="bg-yellow-200 text-yellow-800 px-3 py-2 rounded hover:bg-yellow-300 flex items-center whitespace-nowrap text-sm font-bold">
-                            ${svgSearch} 検索
-                        </button>
-                    </div>
-
+                    <input type="text" id="editLocation" autocomplete="new-password" class="w-full border rounded p-2 bg-white" value="${escapeHTML(eventData.location || '')}" placeholder="場所">
                     <textarea id="editDesc" autocomplete="new-password" class="w-full border rounded p-2 h-24 bg-white">${escapeHTML(eventData.description || '')}</textarea>
                     <div class="flex gap-2">
                         <button id="saveEditBtn" class="flex-1 bg-yellow-600 text-white font-bold py-2 rounded">保存する</button>
@@ -242,11 +296,11 @@ async function renderRsvpPage(id) {
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">出欠ステータス</label>
-                    <div class="flex flex-wrap gap-4 font-bold text-gray-700">
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="-" checked> -</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="〇"> 〇</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="△"> △</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="×"> ×</label>
+                    <div class="flex flex-wrap gap-5 font-bold text-gray-700">
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="-" checked> ${svgDash}</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="〇"> ${svgMaru}</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="△"> ${svgSankaku}</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="status" value="×"> ${svgBatsu}</label>
                     </div>
                 </div>
                 <div>
@@ -258,7 +312,6 @@ async function renderRsvpPage(id) {
 
             <h2 class="text-xl font-bold mb-4 flex items-center border-l-4 border-indigo-600 pl-2">出欠リスト</h2>
             
-            <!-- リストの見出し -->
             <div class="hidden md:grid grid-cols-12 gap-2 mb-2 px-3 text-sm font-bold text-gray-500">
                 <div class="col-span-4">名前</div>
                 <div class="col-span-4">出欠</div>
@@ -279,10 +332,12 @@ async function renderRsvpPage(id) {
             setTimeout(() => document.getElementById('copyBtn').textContent = "URLをコピー", 2000);
         });
 
-        document.getElementById('editSearchMapBtn').addEventListener('click', () => {
-            const loc = document.getElementById('editLocation').value.trim();
-            if (!loc) return alert("場所を入力してください");
-            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc)}`, '_blank');
+        // 編集エリア内の時間制御
+        const editStart = document.getElementById('editStartTime');
+        const editEnd = document.getElementById('editEndTime');
+        editStart.addEventListener('change', () => {
+            const currentEnd = editEnd.value;
+            editEnd.innerHTML = generateTimeOptions(currentEnd, editStart.value);
         });
 
         document.getElementById('editEventBtn').addEventListener('click', () => {
@@ -382,7 +437,6 @@ async function renderRsvpPage(id) {
                 const data = docSnap.data();
                 const rsvpId = docSnap.id;
                 
-                // 集計カウント（過去のデータ形式の互換性も考慮）
                 let currentStatus = data.status;
                 if(currentStatus.includes('〇')) currentStatus = '〇';
                 else if(currentStatus.includes('△')) currentStatus = '△';
@@ -398,15 +452,15 @@ async function renderRsvpPage(id) {
                 
                 const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
 
-                // 【名前・出欠・備考】をGridで横並びに配置
+                // 出欠のプルダウン幅を「w-24（スマートなサイズ）」に縮小し、中央揃えにしました
                 li.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center w-full">
                         <!-- 名前 -->
                         <div class="md:col-span-4 font-bold text-lg truncate">${fullName}</div>
                         
-                        <!-- 出欠 -->
-                        <div class="md:col-span-4 relative">
-                            <select class="status-dropdown appearance-none w-full border border-gray-300 rounded p-2 text-base font-bold bg-gray-50 focus:ring-indigo-200 cursor-pointer pr-8" data-id="${rsvpId}">
+                        <!-- 出欠（コンパクトサイズ） -->
+                        <div class="md:col-span-4 relative w-24">
+                            <select class="status-dropdown appearance-none w-full border border-gray-300 rounded py-2 pl-3 pr-8 text-base font-bold bg-gray-50 focus:ring-indigo-200 cursor-pointer text-center" data-id="${rsvpId}">
                                 <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
                                 <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
                                 <option value="△" ${currentStatus === '△' ? 'selected' : ''}>△</option>
@@ -422,14 +476,14 @@ async function renderRsvpPage(id) {
                 list.appendChild(li);
             });
 
-            // 集計ヘッダー
+            // 集計ヘッダー（SVGを並べて美しく表示）
             const summary = document.createElement('div');
             summary.className = "flex flex-wrap justify-center gap-6 mb-4 text-lg font-bold bg-gray-100 p-4 rounded";
             summary.innerHTML = `
-                <span class="text-green-600">〇 ${counts['〇']}名</span> 
-                <span class="text-yellow-600">△ ${counts['△']}名</span> 
-                <span class="text-red-500">× ${counts['×']}名</span>
-                <span class="text-gray-500">- ${counts['-']}名</span>
+                <span class="flex items-center gap-1 text-green-600">${svgMaru} ${counts['〇']}名</span> 
+                <span class="flex items-center gap-1 text-yellow-600">${svgSankaku} ${counts['△']}名</span> 
+                <span class="flex items-center gap-1 text-red-500">${svgBatsu} ${counts['×']}名</span>
+                <span class="flex items-center gap-1 text-gray-500">${svgDash} ${counts['-']}名</span>
             `;
             list.insertBefore(summary, list.firstChild);
         });
