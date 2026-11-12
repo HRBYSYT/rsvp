@@ -20,11 +20,12 @@ const db = getFirestore(app);
 
 const urlParams = new URLSearchParams(window.location.search);
 const eventId = urlParams.get('id');
-// ボディ全体の背景色を高級感のあるオフホワイト（#FAF9F6）に変更
-document.body.className = "bg-[#FAF9F6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white";
+
+// 背景を少し暗めのグレージュにして、メイン画面をクリーム色に際立たせる
+document.body.className = "bg-[#EFECE6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white";
 const appDiv = document.getElementById('app');
-// メインコンテナの装飾（ワインレッドのトップボーダー、シャドウ）
-appDiv.className = "bg-white p-6 md:p-10 shadow-lg border border-stone-200 border-t-[6px] border-t-[#7B2C3A] rounded-sm max-w-3xl mx-auto mt-8 mb-20";
+// メイン画面（白ではなく高級感のあるクリーム色 #FCFBF7 に変更）
+appDiv.className = "bg-[#FCFBF7] p-6 md:p-10 shadow-xl border border-stone-200 border-t-[6px] border-t-[#7B2C3A] rounded-sm max-w-3xl mx-auto mt-8 mb-20";
 
 // ==========================================
 // 各種SVGアイコン
@@ -37,7 +38,6 @@ const svgSankaku = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-am
 const svgBatsu = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-rose-600" fill="none" stroke="currentColor" stroke-width="3"><path d="M7 7l10 10M17 7L7 17" stroke-linecap="round"></path></svg>`;
 const svgDash = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-stone-400" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14" stroke-linecap="round"></path></svg>`;
 
-// 時間のプルダウンを生成する関数
 function generateTimeOptions(defaultTime, minTime = null) {
     let options = `<option value="">未選択</option>`;
     for (let h = 0; h < 24; h++) {
@@ -72,18 +72,18 @@ function renderCreateEventPage() {
         <div class="space-y-6 text-sm">
             <div>
                 <label class="block font-bold mb-2 text-stone-700">イベント名 <span class="text-[#7B2C3A]">*</span></label>
-                <input type="text" id="eventName" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" placeholder="例：カラリスト忘年会 2026">
+                <input type="text" id="eventName" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="例：カラリスト忘年会 2026">
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block font-bold mb-2 text-stone-700">日にち</label>
-                    <input type="date" id="eventDate" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition">
+                    <input type="date" id="eventDate" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
                 <div>
                     <label class="block font-bold mb-2 text-stone-700">開始時間</label>
                     <div class="relative">
-                        <select id="eventStartTime" class="appearance-none w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white pr-8 transition">
+                        <select id="eventStartTime" class="appearance-none w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white pr-8 transition">
                             ${generateTimeOptions('')}
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-stone-500">${svgChevron}</div>
@@ -92,7 +92,7 @@ function renderCreateEventPage() {
                 <div>
                     <label class="block font-bold mb-2 text-stone-700">終了時間</label>
                     <div class="relative">
-                        <select id="eventEndTime" class="appearance-none w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white pr-8 transition">
+                        <select id="eventEndTime" class="appearance-none w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white pr-8 transition">
                             ${generateTimeOptions('')}
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-stone-500">${svgChevron}</div>
@@ -100,7 +100,7 @@ function renderCreateEventPage() {
                 </div>
             </div>
 
-            <div class="bg-[#F9F8F6] p-4 border border-stone-200 rounded-sm">
+            <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
                 <div class="mb-4">
                     <label class="block font-bold mb-2 text-stone-700">マップ検索用キーワード</label>
                     <div class="relative">
@@ -117,13 +117,13 @@ function renderCreateEventPage() {
 
             <div>
                 <label class="block font-bold mb-2 text-stone-700">詳細・備考</label>
-                <textarea id="eventDesc" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 h-32 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" placeholder="会費や待ち合わせ場所などの詳細"></textarea>
+                <textarea id="eventDesc" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 h-32 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="会費や待ち合わせ場所などの詳細"></textarea>
             </div>
             
             <div class="border-t border-stone-200 pt-6 mt-6">
                 <label class="block font-bold mb-2 text-[#7B2C3A]">管理用パスワード（数字4桁） <span class="text-[#7B2C3A]">*</span></label>
                 <p class="text-xs text-stone-500 mb-2">※イベント内容の編集・削除時に必要になります。</p>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventPin" maxlength="4" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-full md:w-1/3 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] tracking-widest text-lg bg-stone-50 focus:bg-white transition" placeholder="1234">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventPin" maxlength="4" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-full md:w-1/3 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] tracking-widest text-lg bg-white transition" placeholder="1234">
             </div>
 
             <div class="pt-4">
@@ -169,7 +169,7 @@ function renderCreateEventPage() {
                         div.addEventListener('click', (ev) => {
                             const selectedName = ev.currentTarget.getAttribute('data-name');
                             locQuery.value = selectedName;
-                            locDisp.value = selectedName; // 選択時に表示名も一旦同じもので埋める
+                            locDisp.value = selectedName;
                             locSug.classList.add('hidden');
                         });
                     });
@@ -197,8 +197,8 @@ function renderCreateEventPage() {
                 date: document.getElementById('eventDate').value,
                 startTime: document.getElementById('eventStartTime').value,
                 endTime: document.getElementById('eventEndTime').value,
-                locationQuery: locQuery.value, // マップ用
-                location: locDisp.value,       // 表示用
+                locationQuery: locQuery.value,
+                location: locDisp.value,
                 description: document.getElementById('eventDesc').value,
                 pin: pin,
                 createdAt: serverTimestamp()
@@ -230,10 +230,13 @@ async function renderRsvpPage(id) {
         const eventUrl = window.location.href;
         
         const dateStr = formatDateDisplay(eventData.date);
-        const timeStr = (eventData.startTime || eventData.endTime) ? 
-                        `開始 ${eventData.startTime || '未定'} 〜 終了 ${eventData.endTime || '未定'}` : '';
         
-        // 検索用キーワードがあればそれを使用、なければ表示用を使用
+        // 「開始・終了」を削り、時間のみに変更
+        let timeStr = '';
+        if (eventData.startTime || eventData.endTime) {
+            timeStr = `${eventData.startTime || '未定'} 〜 ${eventData.endTime || '未定'}`;
+        }
+        
         const targetQuery = eventData.locationQuery || eventData.location;
         let locationHTML = '未定';
         if (eventData.location) {
@@ -247,7 +250,7 @@ async function renderRsvpPage(id) {
 
         appDiv.innerHTML = `
             <div id="eventDisplayArea" class="mb-10 relative">
-                <button id="editEventBtn" class="absolute top-0 right-0 text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-white px-2 py-1">${svgEdit} 編集</button>
+                <button id="editEventBtn" class="absolute top-0 right-0 text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-2 py-1">${svgEdit} 編集</button>
                 <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] pr-16">${escapeHTML(eventData.name)}</h1>
                 
                 <div class="space-y-3 mb-6 text-sm text-stone-700 leading-relaxed px-2">
@@ -262,23 +265,23 @@ async function renderRsvpPage(id) {
                 </div>
 
                 ${eventData.description ? 
-                    `<div class="bg-[#F9F8F6] p-6 text-sm text-stone-700 leading-loose whitespace-pre-wrap rounded-sm border border-stone-200">${escapeHTML(eventData.description)}</div>` : ''}
+                    `<div class="bg-[#F4F1EA] p-6 text-sm text-stone-700 leading-loose whitespace-pre-wrap rounded-sm border border-stone-200">${escapeHTML(eventData.description)}</div>` : ''}
 
                 <div class="mt-6 flex items-center gap-2 max-w-lg">
-                    <input type="text" readonly value="${eventUrl}" class="flex-1 border border-stone-300 p-2 text-xs bg-stone-50 text-stone-500 outline-none">
+                    <input type="text" readonly value="${eventUrl}" class="flex-1 border border-stone-300 p-2 text-xs bg-white text-stone-500 outline-none">
                     <button id="copyBtn" class="bg-stone-200 px-4 py-2 text-xs font-bold hover:bg-stone-300 transition text-stone-700 whitespace-nowrap">URLをコピー</button>
                 </div>
             </div>
 
             <!-- 編集フォーム -->
-            <div id="eventEditArea" class="mb-10 hidden bg-[#F9F8F6] p-6 border border-stone-200 rounded-sm">
+            <div id="eventEditArea" class="mb-10 hidden bg-[#F4F1EA] p-6 border border-stone-200 rounded-sm">
                 <h2 class="text-lg font-bold mb-4 text-[#7B2C3A] flex items-center">${svgEdit} イベント情報の編集</h2>
                 <div class="space-y-4 text-sm">
-                    <input type="text" id="editName" autocomplete="new-password" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.name)}">
+                    <input type="text" id="editName" autocomplete="new-password" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.name)}">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <input type="date" id="editDate" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A]" value="${eventData.date || ''}">
-                        <select id="editStartTime" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A]">${generateTimeOptions(eventData.startTime)}</select>
-                        <select id="editEndTime" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A]">${generateTimeOptions(eventData.endTime, eventData.startTime)}</select>
+                        <input type="date" id="editDate" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${eventData.date || ''}">
+                        <select id="editStartTime" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white">${generateTimeOptions(eventData.startTime)}</select>
+                        <select id="editEndTime" class="border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white">${generateTimeOptions(eventData.endTime, eventData.startTime)}</select>
                     </div>
                     <div class="grid grid-cols-1 gap-2 p-3 bg-white border border-stone-200">
                         <div>
@@ -290,7 +293,7 @@ async function renderRsvpPage(id) {
                             <input type="text" id="editLocation" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.location || '')}">
                         </div>
                     </div>
-                    <textarea id="editDesc" autocomplete="new-password" class="w-full border border-stone-300 p-2 h-24 focus:outline-none focus:border-[#7B2C3A]">${escapeHTML(eventData.description || '')}</textarea>
+                    <textarea id="editDesc" autocomplete="new-password" class="w-full border border-stone-300 p-2 h-24 focus:outline-none focus:border-[#7B2C3A] bg-white">${escapeHTML(eventData.description || '')}</textarea>
                     <div class="flex gap-3 pt-2">
                         <button id="saveEditBtn" class="flex-1 bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition">保存する</button>
                         <button id="cancelEditBtn" class="bg-stone-300 px-6 py-3 rounded-sm font-bold text-stone-700 hover:bg-stone-400 transition">キャンセル</button>
@@ -299,19 +302,20 @@ async function renderRsvpPage(id) {
             </div>
 
             <!-- 出欠入力フォーム -->
-            <div class="mb-12 bg-[#F9F8F6] p-6 border border-stone-200 rounded-sm">
+            <div class="mb-12 bg-[#F4F1EA] p-6 border border-stone-200 rounded-sm">
                 <div class="text-center mb-6">
-                    <div class="inline-block bg-[#7B2C3A] text-white text-sm font-bold px-8 py-2 rounded-sm shadow-sm">名簿登録・お問い合わせ</div>
+                    <!-- お問い合わせの文字を削除 -->
+                    <div class="inline-block bg-[#7B2C3A] text-white text-sm font-bold px-8 py-2 rounded-sm shadow-sm">名簿登録</div>
                     <p class="text-xs text-stone-500 mt-3">※名簿にお名前がない方は、お手数ですがこちらからご登録をお願いいたします。</p>
                 </div>
                 
                 <div class="space-y-4 text-sm max-w-xl mx-auto">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <input type="text" id="lastName" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A]" placeholder="姓（例：山田）">
+                            <input type="text" id="lastName" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="姓（例：山田）">
                         </div>
                         <div>
-                            <input type="text" id="firstName" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A]" placeholder="名（例：太郎）">
+                            <input type="text" id="firstName" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="名（例：太郎）">
                         </div>
                     </div>
                     <div class="bg-white p-3 border border-stone-200 flex justify-center gap-6">
@@ -321,19 +325,19 @@ async function renderRsvpPage(id) {
                         <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="status" value="×" class="accent-[#7B2C3A]"> ${svgBatsu}</label>
                     </div>
                     <div>
-                        <input type="text" id="guestComment" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A]" placeholder="備考（任意）">
+                        <input type="text" id="guestComment" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="備考（任意）">
                     </div>
                     <button id="submitBtn" class="w-full bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition shadow-sm">リストに追加する</button>
                 </div>
             </div>
 
-            <!-- 出欠リスト（テーブル風デザイン） -->
+            <!-- 出欠リスト -->
             <div class="mb-4 flex items-end justify-between border-b-2 border-stone-300 pb-2">
                 <h2 class="text-lg font-bold text-stone-800 tracking-wider">名簿</h2>
                 <div id="summaryArea" class="text-sm font-bold text-stone-600 flex gap-4"></div>
             </div>
             
-            <p class="text-xs text-stone-500 mb-3">自分の行の「出欠」を選ぶと、すぐに保存されます。</p>
+            <p class="text-xs text-stone-500 mb-3">自分の行の「出欠」や「コメント」はいつでもクリックして編集できます。</p>
             
             <!-- リストヘッダー -->
             <div class="hidden md:grid grid-cols-12 gap-3 mb-1 px-4 py-2 bg-[#F4F1EA] border border-stone-300 text-xs font-bold text-stone-700">
@@ -438,11 +442,15 @@ async function renderRsvpPage(id) {
             document.getElementById('submitBtn').disabled = false;
         });
 
+        // リスト内の「出欠プルダウン」と「コメント入力欄」両方の変更をキャッチ
         document.getElementById('rsvpList').addEventListener('change', async (e) => {
+            const rsvpId = e.target.getAttribute('data-id');
+            if (!rsvpId) return;
+
             if (e.target.classList.contains('status-dropdown')) {
-                const rsvpId = e.target.getAttribute('data-id');
-                const newStatus = e.target.value;
-                await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { status: newStatus });
+                await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { status: e.target.value });
+            } else if (e.target.classList.contains('comment-input')) {
+                await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { comment: e.target.value });
             }
         });
 
@@ -467,17 +475,18 @@ async function renderRsvpPage(id) {
                 if(counts[currentStatus] !== undefined) counts[currentStatus]++;
 
                 const row = document.createElement('div');
-                // テーブル行のようなデザイン（PCは横並び、スマホは縦積みぎみ）
-                row.className = "grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-3 items-center w-full px-4 py-3 border-b border-stone-200 bg-white hover:bg-stone-50 transition text-sm";
+                // クリーム色の背景と馴染むように透明(transparent)をベースにし、ホバーで少し色付け
+                row.className = "grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-3 items-center w-full px-4 py-3 border-b border-stone-200 bg-transparent hover:bg-[#F4F1EA] transition text-sm";
                 
                 const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
 
+                // コメントを自由に編集できる input に変更しました
                 row.innerHTML = `
                     <div class="md:col-span-4 font-bold text-stone-800 truncate">${fullName}</div>
                     
                     <div class="md:col-span-3 flex md:justify-center">
                         <div class="relative w-24">
-                            <select class="status-dropdown appearance-none w-full border border-stone-300 rounded-sm py-1.5 pl-3 pr-8 text-sm font-bold bg-white focus:outline-none focus:border-[#7B2C3A] cursor-pointer text-center" data-id="${rsvpId}">
+                            <select class="status-dropdown appearance-none w-full border border-stone-300 rounded-sm py-1.5 pl-3 pr-8 text-sm font-bold bg-white focus:outline-none focus:border-[#7B2C3A] cursor-pointer text-center transition" data-id="${rsvpId}">
                                 <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
                                 <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
                                 <option value="△" ${currentStatus === '△' ? 'selected' : ''}>△</option>
@@ -487,7 +496,9 @@ async function renderRsvpPage(id) {
                         </div>
                     </div>
                     
-                    <div class="md:col-span-5 text-stone-600 break-all text-xs md:text-sm">${escapeHTML(data.comment || '')}</div>
+                    <div class="md:col-span-5 relative">
+                        <input type="text" class="comment-input w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-xs md:text-sm py-1 transition" data-id="${rsvpId}" value="${escapeHTML(data.comment || '')}" placeholder="クリックしてコメントを編集">
+                    </div>
                 `;
                 list.appendChild(row);
             });
