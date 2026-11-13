@@ -131,6 +131,7 @@ if (!eventId) {
 // イベント作成画面
 // ------------------------------------------
 function renderCreateEventPage() {
+    document.title = "新規イベント作成";
     const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
     let selectedLocationQuery = "";
     
@@ -170,24 +171,29 @@ function renderCreateEventPage() {
             <div>
                 <label class="block font-bold mb-2 text-stone-700">参加費</label>
                 <div class="flex items-center gap-2">
-                    <input type="text" id="eventFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/3 md:w-1/4 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition text-right">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/3 md:w-1/4 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition text-right">
                     <span class="text-stone-700 font-bold">円</span>
                 </div>
             </div>
 
             <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
                 <div class="mb-4">
-                    <label class="block font-bold mb-2 text-stone-700">マップ検索用キーワード</label>
+                    <label class="block font-bold mb-2 text-stone-700">マップ埋め込み用地図を検索</label>
                     <div class="relative">
-                        <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="場所を検索（例：高輪プリンスホテル）">
+                        <!-- プレースホルダーを削除 -->
+                        <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="">
                         
                         <div id="locSuggestions" class="absolute top-full left-0 z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
                     </div>
                     <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図リンクが登録されます。</p>
                 </div>
-                <div>
-                    <label class="block font-bold mb-2 text-stone-700">画面に表示するテキスト <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
+                <div class="mb-4">
+                    <label class="block font-bold mb-2 text-stone-700">表示する場所の名前 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
                     <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
+                </div>
+                <div>
+                    <label class="block font-bold mb-2 text-stone-700">住所 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
+                    <input type="text" id="eventAddress" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
             </div>
 
@@ -216,6 +222,7 @@ function renderCreateEventPage() {
 
     const locQuery = document.getElementById('eventLocationQuery');
     const locDisp = document.getElementById('eventLocation');
+    const locAddr = document.getElementById('eventAddress');
     const locSug = document.getElementById('locSuggestions');
     let locTimeout;
 
@@ -247,9 +254,10 @@ function renderCreateEventPage() {
                             const selectedAddress = ev.currentTarget.getAttribute('data-address');
                             locQuery.value = selectedAddress; 
                             selectedLocationQuery = selectedAddress;
-                            if (!locDisp.value.trim()) {
-                                locDisp.value = selectedName; 
-                            }
+                            
+                            if (!locDisp.value.trim()) locDisp.value = selectedName; 
+                            if (!locAddr.value.trim()) locAddr.value = selectedAddress;
+
                             locSug.classList.add('hidden');
                         });
                     });
@@ -285,6 +293,7 @@ function renderCreateEventPage() {
                 fee: formattedFee,
                 locationQuery: finalLocQuery,
                 location: document.getElementById('eventLocation').value,
+                address: document.getElementById('eventAddress').value,
                 description: document.getElementById('eventDesc').value,
                 pin: pin,
                 createdAt: serverTimestamp()
@@ -316,6 +325,7 @@ async function renderRsvpPage(id) {
         }
 
         const eventData = eventSnap.data();
+        document.title = eventData.name ? `${eventData.name}` : '出欠確認システム';
         
         if (eventData.date) {
             const eDate = new Date(eventData.date);
@@ -376,6 +386,12 @@ async function renderRsvpPage(id) {
                         <span class="font-bold w-20 text-stone-500 shrink-0">場所</span>
                         <span>${locationHTML}</span>
                     </div>
+                    ${eventData.address ? `
+                    <div class="flex flex-col md:flex-row md:items-start">
+                        <span class="font-bold w-20 text-stone-500 shrink-0">住所</span>
+                        <span>${escapeHTML(eventData.address)}</span>
+                    </div>
+                    ` : ''}
                     ${eventData.fee ? `
                     <div class="flex flex-col md:flex-row md:items-center">
                         <span class="font-bold w-20 text-stone-500 shrink-0">参加費</span>
@@ -413,23 +429,27 @@ async function renderRsvpPage(id) {
                     <div>
                         <label class="text-xs font-bold text-stone-500">参加費</label>
                         <div class="flex items-center gap-2">
-                            <input type="text" id="editFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/3 md:w-1/4 border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white text-right" value="${escapeHTML(eventData.fee ? eventData.fee.replace('円','') : '')}">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" id="editFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/3 md:w-1/4 border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white text-right" value="${escapeHTML(eventData.fee ? eventData.fee.replace('円','').replace(/,/g, '') : '')}">
                             <span class="text-stone-700 font-bold">円</span>
                         </div>
                     </div>
                     <div class="grid grid-cols-1 gap-2 p-4 bg-white border border-stone-200">
                         <div>
-                            <label class="text-xs font-bold text-stone-500">マップ検索用キーワード</label>
-                            <div class="relative">
-                                <input type="text" id="editLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.locationQuery || '')}">
+                            <label class="text-xs font-bold text-stone-500">マップ埋め込み用地図を検索</label>
+                            <div class="relative mb-2">
+                                <input type="text" id="editLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="" value="${escapeHTML(eventData.locationQuery || '')}">
                                 
                                 <div id="editLocSuggestions" class="absolute top-full left-0 z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
                             </div>
                             <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図リンクが登録されます。</p>
                         </div>
                         <div class="mt-2">
-                            <label class="text-xs font-bold text-stone-500">画面表示用のテキスト</label>
-                            <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.location || '')}">
+                            <label class="text-xs font-bold text-stone-500">表示する場所の名前</label>
+                            <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.location || '')}">
+                        </div>
+                        <div class="mt-2">
+                            <label class="text-xs font-bold text-stone-500">住所</label>
+                            <input type="text" id="editAddress" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.address || '')}">
                         </div>
                     </div>
                     <div>
@@ -544,6 +564,7 @@ async function renderRsvpPage(id) {
 
         const editLocQuery = document.getElementById('editLocationQuery');
         const editLocDisp = document.getElementById('editLocation');
+        const editLocAddr = document.getElementById('editAddress');
         const editLocSug = document.getElementById('editLocSuggestions');
         let editLocTimeout;
 
@@ -575,9 +596,10 @@ async function renderRsvpPage(id) {
                                 const selectedAddress = ev.currentTarget.getAttribute('data-address');
                                 editLocQuery.value = selectedAddress;
                                 selectedEditLocationQuery = selectedAddress;
-                                if (!editLocDisp.value.trim()) {
-                                    editLocDisp.value = selectedName;
-                                }
+                                
+                                if (!editLocDisp.value.trim()) editLocDisp.value = selectedName;
+                                if (!editLocAddr.value.trim()) editLocAddr.value = selectedAddress;
+                                
                                 editLocSug.classList.add('hidden');
                             });
                         });
@@ -632,6 +654,7 @@ async function renderRsvpPage(id) {
                     fee: formattedFee,
                     locationQuery: finalLocQuery,
                     location: document.getElementById('editLocation').value,
+                    address: document.getElementById('editAddress').value,
                     description: document.getElementById('editDesc').value
                 });
                 window.location.reload();
