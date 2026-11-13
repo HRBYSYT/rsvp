@@ -95,7 +95,6 @@ function showModal(type, title, message) {
 // ==========================================
 const svgChevron = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
 const svgEdit = `<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
-
 const svgMaru = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-emerald-600" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="8"></circle></svg>`;
 const svgSankaku = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-amber-500" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 4L3 19h18L12 4z" stroke-linejoin="round"></path></svg>`;
 const svgBatsu = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-rose-600" fill="none" stroke="currentColor" stroke-width="3"><path d="M7 7l10 10M17 7L7 17" stroke-linecap="round"></path></svg>`;
@@ -131,6 +130,8 @@ if (!eventId) {
 // ------------------------------------------
 function renderCreateEventPage() {
     const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
+    // ★ 選択された場所を保持する変数
+    let selectedLocationQuery = "";
     
     appDiv.innerHTML = `
         <h1 class="text-2xl font-bold mb-8 text-center text-[#7B2C3A] tracking-wider">新規イベント作成</h1>
@@ -176,16 +177,19 @@ function renderCreateEventPage() {
             <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
                 <div class="mb-4">
                     <label class="block font-bold mb-2 text-stone-700">マップ検索用キーワード</label>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 relative">
                         <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="flex-1 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                         <button type="button" id="previewMapBtn" class="bg-stone-200 text-stone-700 px-4 py-2 font-bold rounded-sm hover:bg-stone-300 transition whitespace-nowrap">地図を確認</button>
+                        
+                        <!-- 検索結果のサジェストリスト -->
+                        <div id="locSuggestions" class="absolute top-full left-0 z-10 w-[calc(100%-110px)] bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
                     </div>
                     
                     <div id="mapPreviewArea" class="mt-3 hidden border border-stone-300 rounded-sm overflow-hidden bg-white">
                         <iframe id="mapPreviewFrame" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                     </div>
                     
-                    <p class="text-xs text-stone-500 mt-2">※確認ボタンを押すとGoogleマップが表示され、この場所でピンが登録されます。</p>
+                    <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図を確認・登録できます。</p>
                 </div>
                 <div>
                     <label class="block font-bold mb-2 text-stone-700">画面に表示するテキスト <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
@@ -216,21 +220,68 @@ function renderCreateEventPage() {
         endSel.innerHTML = generateTimeOptions(endSel.value, startSel.value);
     });
 
-    document.getElementById('previewMapBtn').addEventListener('click', () => {
-        const query = document.getElementById('eventLocationQuery').value.trim();
-        const dispInput = document.getElementById('eventLocation');
+    const locQuery = document.getElementById('eventLocationQuery');
+    const locDisp = document.getElementById('eventLocation');
+    const locSug = document.getElementById('locSuggestions');
+    let locTimeout;
+
+    locQuery.addEventListener('input', (e) => {
+        // ★手入力で文字が変わったら選択状態をリセット
+        selectedLocationQuery = ""; 
+        document.getElementById('mapPreviewArea').classList.add('hidden');
+        document.getElementById('mapPreviewFrame').src = '';
+
+        clearTimeout(locTimeout);
+        const q = e.target.value.trim();
+        if (q.length < 2) {
+            locSug.classList.add('hidden');
+            return;
+        }
+        locTimeout = setTimeout(async () => {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=jp`);
+                const data = await res.json();
+                if (data.length > 0) {
+                    locSug.innerHTML = data.map(item => {
+                        const name = item.name || item.display_name.split(',')[0];
+                        return `<div class="p-3 hover:bg-[#F9F8F6] cursor-pointer border-b border-stone-100 text-sm text-stone-700 transition" data-name="${name}">
+                                    <div class="font-bold">${name}</div>
+                                    <div class="text-xs text-stone-400 truncate mt-1">${item.display_name}</div>
+                                </div>`;
+                    }).join('');
+                    locSug.classList.remove('hidden');
+                    
+                    locSug.querySelectorAll('div[data-name]').forEach(div => {
+                        div.addEventListener('click', (ev) => {
+                            const selectedName = ev.currentTarget.getAttribute('data-name');
+                            locQuery.value = selectedName;
+                            // ★リストから選ばれたら変数に保持する
+                            selectedLocationQuery = selectedName;
+                            locSug.classList.add('hidden');
+                        });
+                    });
+                }
+            } catch(err) {}
+        }, 500);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!locQuery.contains(e.target) && !locSug.contains(e.target)) locSug.classList.add('hidden');
+    });
+
+    document.getElementById('previewMapBtn').addEventListener('click', async () => {
+        if (!selectedLocationQuery) {
+            await showModal('alert', '確認', '検索候補のリストから場所を選択してください。');
+            return;
+        }
         const area = document.getElementById('mapPreviewArea');
         const frame = document.getElementById('mapPreviewFrame');
-        if (query) {
-            frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
-            area.classList.remove('hidden');
-            // 地図確認時に、表示用テキストが空なら自動で同じものを入れる
-            if (!dispInput.value.trim()) {
-                dispInput.value = query;
-            }
-        } else {
-            area.classList.add('hidden');
-            frame.src = '';
+        
+        frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(selectedLocationQuery)}&output=embed`;
+        area.classList.remove('hidden');
+        
+        if (!locDisp.value.trim()) {
+            locDisp.value = selectedLocationQuery;
         }
     });
 
@@ -246,6 +297,8 @@ function renderCreateEventPage() {
 
         const feeValue = document.getElementById('eventFee').value;
         const formattedFee = feeValue ? `${feeValue}円` : '';
+        // 最終的に登録するマップキーワード（選択されていればそれを、されていなければ空にする）
+        const finalLocQuery = selectedLocationQuery ? selectedLocationQuery : '';
 
         try {
             const docRef = await addDoc(collection(db, "events"), {
@@ -254,7 +307,7 @@ function renderCreateEventPage() {
                 startTime: document.getElementById('eventStartTime').value,
                 endTime: document.getElementById('eventEndTime').value,
                 fee: formattedFee,
-                locationQuery: document.getElementById('eventLocationQuery').value,
+                locationQuery: finalLocQuery,
                 location: document.getElementById('eventLocation').value,
                 description: document.getElementById('eventDesc').value,
                 pin: pin,
@@ -317,7 +370,7 @@ async function renderRsvpPage(id) {
         const targetQuery = eventData.locationQuery || eventData.location;
         let locationHTML = '未定';
         if (eventData.location) {
-            if (targetQuery) {
+            if (targetQuery && eventData.locationQuery !== '') { // locationQueryが意図的に空の場合はリンク化しない
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(targetQuery)}`;
                 locationHTML = `<a href="${mapUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.location)}</a>`;
             } else {
@@ -326,6 +379,9 @@ async function renderRsvpPage(id) {
         }
 
         const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
+        
+        // ★ 編集画面用の選択保持変数
+        let selectedEditLocationQuery = eventData.locationQuery || "";
 
         appDiv.innerHTML = `
             <div id="eventDisplayArea" class="mb-10 relative">
@@ -389,13 +445,16 @@ async function renderRsvpPage(id) {
                     <div class="grid grid-cols-1 gap-2 p-4 bg-white border border-stone-200">
                         <div>
                             <label class="text-xs font-bold text-stone-500">マップ検索用キーワード</label>
-                            <div class="flex gap-2 mb-2">
+                            <div class="flex gap-2 mb-2 relative">
                                 <input type="text" id="editLocationQuery" name="${rName()}" autocomplete="new-password" class="flex-1 border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.locationQuery || '')}">
                                 <button type="button" id="editPreviewMapBtn" class="bg-stone-200 text-stone-700 px-3 py-1 font-bold rounded-sm hover:bg-stone-300 transition whitespace-nowrap text-xs">地図を確認</button>
+                                
+                                <div id="editLocSuggestions" class="absolute top-full left-0 z-10 w-[calc(100%-80px)] bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
                             </div>
                             <div id="editMapPreviewArea" class="mt-2 hidden border border-stone-300 rounded-sm overflow-hidden bg-white">
                                 <iframe id="editMapPreviewFrame" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                             </div>
+                            <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図を確認・登録できます。</p>
                         </div>
                         <div class="mt-2">
                             <label class="text-xs font-bold text-stone-500">画面表示用のテキスト</label>
@@ -504,20 +563,67 @@ async function renderRsvpPage(id) {
             }
         });
 
-        document.getElementById('editPreviewMapBtn').addEventListener('click', () => {
-            const query = document.getElementById('editLocationQuery').value.trim();
-            const dispInput = document.getElementById('editLocation');
+        // ★ 編集画面のサジェストとマッププレビュー制御
+        const editLocQuery = document.getElementById('editLocationQuery');
+        const editLocDisp = document.getElementById('editLocation');
+        const editLocSug = document.getElementById('editLocSuggestions');
+        let editLocTimeout;
+
+        editLocQuery.addEventListener('input', (e) => {
+            selectedEditLocationQuery = ""; 
+            document.getElementById('editMapPreviewArea').classList.add('hidden');
+            document.getElementById('editMapPreviewFrame').src = '';
+
+            clearTimeout(editLocTimeout);
+            const q = e.target.value.trim();
+            if (q.length < 2) {
+                editLocSug.classList.add('hidden');
+                return;
+            }
+            editLocTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=jp`);
+                    const data = await res.json();
+                    if (data.length > 0) {
+                        editLocSug.innerHTML = data.map(item => {
+                            const name = item.name || item.display_name.split(',')[0];
+                            return `<div class="p-3 hover:bg-[#F9F8F6] cursor-pointer border-b border-stone-100 text-sm text-stone-700 transition" data-name="${name}">
+                                        <div class="font-bold">${name}</div>
+                                        <div class="text-xs text-stone-400 truncate mt-1">${item.display_name}</div>
+                                    </div>`;
+                        }).join('');
+                        editLocSug.classList.remove('hidden');
+                        
+                        editLocSug.querySelectorAll('div[data-name]').forEach(div => {
+                            div.addEventListener('click', (ev) => {
+                                const selectedName = ev.currentTarget.getAttribute('data-name');
+                                editLocQuery.value = selectedName;
+                                selectedEditLocationQuery = selectedName;
+                                editLocSug.classList.add('hidden');
+                            });
+                        });
+                    }
+                } catch(err) {}
+            }, 500);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!editLocQuery.contains(e.target) && !editLocSug.contains(e.target)) editLocSug.classList.add('hidden');
+        });
+
+        document.getElementById('editPreviewMapBtn').addEventListener('click', async () => {
+            if (!selectedEditLocationQuery) {
+                await showModal('alert', '確認', '検索候補のリストから場所を選択してください。');
+                return;
+            }
             const area = document.getElementById('editMapPreviewArea');
             const frame = document.getElementById('editMapPreviewFrame');
-            if (query) {
-                frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
-                area.classList.remove('hidden');
-                if (!dispInput.value.trim()) {
-                    dispInput.value = query;
-                }
-            } else {
-                area.classList.add('hidden');
-                frame.src = '';
+            
+            frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(selectedEditLocationQuery)}&output=embed`;
+            area.classList.remove('hidden');
+            
+            if (!editLocDisp.value.trim()) {
+                editLocDisp.value = selectedEditLocationQuery;
             }
         });
 
@@ -551,7 +657,8 @@ async function renderRsvpPage(id) {
             
             const feeValue = document.getElementById('editFee').value;
             const formattedFee = feeValue ? `${feeValue}円` : '';
-            
+            const finalLocQuery = selectedEditLocationQuery ? selectedEditLocationQuery : '';
+
             document.getElementById('saveEditBtn').textContent = "保存中...";
             try {
                 await updateDoc(doc(db, "events", id), {
@@ -560,7 +667,7 @@ async function renderRsvpPage(id) {
                     startTime: document.getElementById('editStartTime').value,
                     endTime: document.getElementById('editEndTime').value,
                     fee: formattedFee,
-                    locationQuery: document.getElementById('editLocationQuery').value,
+                    locationQuery: finalLocQuery,
                     location: document.getElementById('editLocation').value,
                     description: document.getElementById('editDesc').value
                 });
