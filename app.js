@@ -180,7 +180,6 @@ function renderCreateEventPage() {
                 <div class="mb-4">
                     <label class="block font-bold mb-2 text-stone-700">マップ埋め込み用地図を検索</label>
                     <div class="relative">
-                        <!-- プレースホルダーを削除 -->
                         <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="">
                         
                         <div id="locSuggestions" class="absolute top-full left-0 z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
@@ -256,7 +255,6 @@ function renderCreateEventPage() {
                             selectedLocationQuery = selectedAddress;
                             
                             if (!locDisp.value.trim()) locDisp.value = selectedName; 
-                            if (!locAddr.value.trim()) locAddr.value = selectedAddress;
 
                             locSug.classList.add('hidden');
                         });
@@ -598,7 +596,6 @@ async function renderRsvpPage(id) {
                                 selectedEditLocationQuery = selectedAddress;
                                 
                                 if (!editLocDisp.value.trim()) editLocDisp.value = selectedName;
-                                if (!editLocAddr.value.trim()) editLocAddr.value = selectedAddress;
                                 
                                 editLocSug.classList.add('hidden');
                             });
