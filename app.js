@@ -181,7 +181,6 @@ function renderCreateEventPage() {
                     <label class="block font-bold mb-2 text-stone-700">マップ埋め込み用地図を検索</label>
                     <div class="relative">
                         <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="">
-                        
                         <div id="locSuggestions" class="absolute top-full left-0 z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
                     </div>
                     <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図リンクが登録されます。</p>
@@ -191,7 +190,7 @@ function renderCreateEventPage() {
                     <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
                 <div>
-                    <label class="block font-bold mb-2 text-stone-700">住所 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
+                    <label class="block font-bold mb-2 text-stone-700">住所 <span class="text-xs font-normal text-stone-500">（自由に編集可能・自動でマップと連携します）</span></label>
                     <input type="text" id="eventAddress" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
             </div>
@@ -255,6 +254,7 @@ function renderCreateEventPage() {
                             selectedLocationQuery = selectedAddress;
                             
                             if (!locDisp.value.trim()) locDisp.value = selectedName; 
+                            if (!locAddr.value.trim()) locAddr.value = selectedAddress;
 
                             locSug.classList.add('hidden');
                         });
@@ -351,6 +351,7 @@ async function renderRsvpPage(id) {
             timeStr = `${eventData.startTime || '未定'} 〜 ${eventData.endTime || '未定'}`;
         }
         
+        // ★ 場所のHTML生成
         const targetQuery = eventData.locationQuery || eventData.location;
         let locationHTML = '未定';
         if (eventData.location) {
@@ -360,6 +361,13 @@ async function renderRsvpPage(id) {
             } else {
                 locationHTML = escapeHTML(eventData.location);
             }
+        }
+
+        // ★ 住所のHTML生成（手入力された住所をそのままGoogleマップリンクにする）
+        let addressHTML = '';
+        if (eventData.address) {
+            const addressMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventData.address)}`;
+            addressHTML = `<a href="${addressMapUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.address)}</a>`;
         }
 
         const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
@@ -387,7 +395,7 @@ async function renderRsvpPage(id) {
                     ${eventData.address ? `
                     <div class="flex flex-col md:flex-row md:items-start">
                         <span class="font-bold w-20 text-stone-500 shrink-0">住所</span>
-                        <span>${escapeHTML(eventData.address)}</span>
+                        <span>${addressHTML}</span>
                     </div>
                     ` : ''}
                     ${eventData.fee ? `
@@ -596,6 +604,7 @@ async function renderRsvpPage(id) {
                                 selectedEditLocationQuery = selectedAddress;
                                 
                                 if (!editLocDisp.value.trim()) editLocDisp.value = selectedName;
+                                if (!editLocAddr.value.trim()) editLocAddr.value = selectedAddress;
                                 
                                 editLocSug.classList.add('hidden');
                             });
