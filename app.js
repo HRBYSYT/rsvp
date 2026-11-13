@@ -133,7 +133,6 @@ if (!eventId) {
 function renderCreateEventPage() {
     document.title = "新規イベント作成";
     const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
-    let selectedLocationQuery = "";
     
     appDiv.innerHTML = `
         <h1 class="text-2xl font-bold mb-8 text-center text-[#7B2C3A] tracking-wider">新規イベント作成</h1>
@@ -178,19 +177,11 @@ function renderCreateEventPage() {
 
             <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
                 <div class="mb-4">
-                    <label class="block font-bold mb-2 text-stone-700">マップ埋め込み用地図を検索</label>
-                    <div class="relative">
-                        <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="">
-                        <div id="locSuggestions" class="absolute top-full left-0 z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
-                    </div>
-                    <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図リンクが登録されます。</p>
-                </div>
-                <div class="mb-4">
                     <label class="block font-bold mb-2 text-stone-700">表示する場所の名前 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
                     <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
                 <div>
-                    <label class="block font-bold mb-2 text-stone-700">住所 <span class="text-xs font-normal text-stone-500">（自由に編集可能・自動でマップと連携します）</span></label>
+                    <label class="block font-bold mb-2 text-stone-700">住所 <span class="text-xs font-normal text-stone-500">（自動でマップのリンクになります）</span></label>
                     <input type="text" id="eventAddress" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
             </div>
@@ -218,56 +209,6 @@ function renderCreateEventPage() {
         endSel.innerHTML = generateTimeOptions(endSel.value, startSel.value);
     });
 
-    const locQuery = document.getElementById('eventLocationQuery');
-    const locDisp = document.getElementById('eventLocation');
-    const locAddr = document.getElementById('eventAddress');
-    const locSug = document.getElementById('locSuggestions');
-    let locTimeout;
-
-    locQuery.addEventListener('input', (e) => {
-        selectedLocationQuery = ""; 
-        clearTimeout(locTimeout);
-        const q = e.target.value.trim();
-        if (q.length < 2) {
-            locSug.classList.add('hidden');
-            return;
-        }
-        locTimeout = setTimeout(async () => {
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=jp`);
-                const data = await res.json();
-                if (data.length > 0) {
-                    locSug.innerHTML = data.map(item => {
-                        const name = item.name || item.display_name.split(',')[0];
-                        const address = item.display_name;
-                        return `<div class="p-3 hover:bg-[#F9F8F6] cursor-pointer border-b border-stone-100 text-sm text-stone-700 transition" data-name="${name}" data-address="${address}">
-                                    <div class="font-bold truncate">${name} <span class="text-[10px] font-normal text-stone-400 ml-2">${address}</span></div>
-                                </div>`;
-                    }).join('');
-                    locSug.classList.remove('hidden');
-                    
-                    locSug.querySelectorAll('div[data-name]').forEach(div => {
-                        div.addEventListener('click', (ev) => {
-                            const selectedName = ev.currentTarget.getAttribute('data-name');
-                            const selectedAddress = ev.currentTarget.getAttribute('data-address');
-                            locQuery.value = selectedAddress; 
-                            selectedLocationQuery = selectedAddress;
-                            
-                            if (!locDisp.value.trim()) locDisp.value = selectedName; 
-                            if (!locAddr.value.trim()) locAddr.value = selectedAddress;
-
-                            locSug.classList.add('hidden');
-                        });
-                    });
-                }
-            } catch(err) {}
-        }, 500);
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!locQuery.contains(e.target) && !locSug.contains(e.target)) locSug.classList.add('hidden');
-    });
-
     document.getElementById('createBtn').addEventListener('click', async () => {
         const name = document.getElementById('eventName').value;
         const pin = document.getElementById('eventPin').value;
@@ -280,7 +221,6 @@ function renderCreateEventPage() {
 
         const feeValue = document.getElementById('eventFee').value.replace(/[^0-9]/g, '');
         const formattedFee = feeValue ? `${Number(feeValue).toLocaleString()}円` : '';
-        const finalLocQuery = selectedLocationQuery ? selectedLocationQuery : '';
 
         try {
             const docRef = await addDoc(collection(db, "events"), {
@@ -289,7 +229,6 @@ function renderCreateEventPage() {
                 startTime: document.getElementById('eventStartTime').value,
                 endTime: document.getElementById('eventEndTime').value,
                 fee: formattedFee,
-                locationQuery: finalLocQuery,
                 location: document.getElementById('eventLocation').value,
                 address: document.getElementById('eventAddress').value,
                 description: document.getElementById('eventDesc').value,
@@ -351,31 +290,22 @@ async function renderRsvpPage(id) {
             timeStr = `${eventData.startTime || '未定'} 〜 ${eventData.endTime || '未定'}`;
         }
         
-        // ★ 場所のHTML生成
-        const targetQuery = eventData.locationQuery || eventData.location;
         let locationHTML = '未定';
         if (eventData.location) {
-            if (targetQuery && eventData.locationQuery !== '') {
-                const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(targetQuery)}`;
-                locationHTML = `<a href="${mapUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.location)}</a>`;
-            } else {
-                locationHTML = escapeHTML(eventData.location);
-            }
+            locationHTML = escapeHTML(eventData.location);
         }
-
-        // ★ 住所のHTML生成（手入力された住所をそのままGoogleマップリンクにする）
+        
+        // ★住所が入力されていればマップのリンクにする
         let addressHTML = '';
         if (eventData.address) {
-            const addressMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventData.address)}`;
-            addressHTML = `<a href="${addressMapUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.address)}</a>`;
+            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventData.address)}`;
+            addressHTML = `<a href="${mapUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.address)}</a>`;
         }
 
         const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
-        let selectedEditLocationQuery = eventData.locationQuery || "";
 
         appDiv.innerHTML = `
             <div id="eventDisplayArea" class="mb-10 relative">
-                <!-- 右上のアクションボタン群 -->
                 <div class="absolute top-0 right-0 flex items-center gap-2">
                     <button id="copyBtn" class="bg-stone-200 px-3 py-1 text-[10px] font-bold hover:bg-stone-300 transition text-stone-700 w-[84px] text-center rounded-sm border border-stone-300 whitespace-nowrap">URLをコピー</button>
                     <button id="editEventBtn" class="text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
@@ -441,20 +371,11 @@ async function renderRsvpPage(id) {
                     </div>
                     <div class="grid grid-cols-1 gap-2 p-4 bg-white border border-stone-200">
                         <div>
-                            <label class="text-xs font-bold text-stone-500">マップ埋め込み用地図を検索</label>
-                            <div class="relative mb-2">
-                                <input type="text" id="editLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="" value="${escapeHTML(eventData.locationQuery || '')}">
-                                
-                                <div id="editLocSuggestions" class="absolute top-full left-0 z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
-                            </div>
-                            <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図リンクが登録されます。</p>
-                        </div>
-                        <div class="mt-2">
                             <label class="text-xs font-bold text-stone-500">表示する場所の名前</label>
                             <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.location || '')}">
                         </div>
                         <div class="mt-2">
-                            <label class="text-xs font-bold text-stone-500">住所</label>
+                            <label class="text-xs font-bold text-stone-500">住所 <span class="text-xs font-normal text-stone-500">（自動でマップのリンクになります）</span></label>
                             <input type="text" id="editAddress" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.address || '')}">
                         </div>
                     </div>
@@ -568,56 +489,6 @@ async function renderRsvpPage(id) {
             }
         });
 
-        const editLocQuery = document.getElementById('editLocationQuery');
-        const editLocDisp = document.getElementById('editLocation');
-        const editLocAddr = document.getElementById('editAddress');
-        const editLocSug = document.getElementById('editLocSuggestions');
-        let editLocTimeout;
-
-        editLocQuery.addEventListener('input', (e) => {
-            selectedEditLocationQuery = ""; 
-            clearTimeout(editLocTimeout);
-            const q = e.target.value.trim();
-            if (q.length < 2) {
-                editLocSug.classList.add('hidden');
-                return;
-            }
-            editLocTimeout = setTimeout(async () => {
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=jp`);
-                    const data = await res.json();
-                    if (data.length > 0) {
-                        editLocSug.innerHTML = data.map(item => {
-                            const name = item.name || item.display_name.split(',')[0];
-                            const address = item.display_name;
-                            return `<div class="p-3 hover:bg-[#F9F8F6] cursor-pointer border-b border-stone-100 text-sm text-stone-700 transition" data-name="${name}" data-address="${address}">
-                                        <div class="font-bold truncate">${name} <span class="text-[10px] font-normal text-stone-400 ml-2">${address}</span></div>
-                                    </div>`;
-                        }).join('');
-                        editLocSug.classList.remove('hidden');
-                        
-                        editLocSug.querySelectorAll('div[data-name]').forEach(div => {
-                            div.addEventListener('click', (ev) => {
-                                const selectedName = ev.currentTarget.getAttribute('data-name');
-                                const selectedAddress = ev.currentTarget.getAttribute('data-address');
-                                editLocQuery.value = selectedAddress;
-                                selectedEditLocationQuery = selectedAddress;
-                                
-                                if (!editLocDisp.value.trim()) editLocDisp.value = selectedName;
-                                if (!editLocAddr.value.trim()) editLocAddr.value = selectedAddress;
-                                
-                                editLocSug.classList.add('hidden');
-                            });
-                        });
-                    }
-                } catch(err) {}
-            }, 500);
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!editLocQuery.contains(e.target) && !editLocSug.contains(e.target)) editLocSug.classList.add('hidden');
-        });
-
         const editStart = document.getElementById('editStartTime');
         const editEnd = document.getElementById('editEndTime');
         editStart.addEventListener('change', () => {
@@ -648,7 +519,6 @@ async function renderRsvpPage(id) {
             
             const feeValue = document.getElementById('editFee').value.replace(/[^0-9]/g, '');
             const formattedFee = feeValue ? `${Number(feeValue).toLocaleString()}円` : '';
-            const finalLocQuery = selectedEditLocationQuery ? selectedEditLocationQuery : '';
 
             document.getElementById('saveEditBtn').textContent = "保存中...";
             try {
@@ -658,7 +528,6 @@ async function renderRsvpPage(id) {
                     startTime: document.getElementById('editStartTime').value,
                     endTime: document.getElementById('editEndTime').value,
                     fee: formattedFee,
-                    locationQuery: finalLocQuery,
                     location: document.getElementById('editLocation').value,
                     address: document.getElementById('editAddress').value,
                     description: document.getElementById('editDesc').value
