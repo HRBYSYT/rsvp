@@ -145,7 +145,7 @@ function renderCreateEventPage() {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block font-bold mb-2 text-stone-700">日にち</label>
-                    <input type="date" id="eventDate" name="${rName()}" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
+                    <input type="date" id="eventDate" name="${rName()}" class="appearance-none min-w-0 w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
                 <div>
                     <label class="block font-bold mb-2 text-stone-700">開始時間</label>
@@ -177,7 +177,7 @@ function renderCreateEventPage() {
 
             <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
                 <div class="mb-4">
-                    <label class="block font-bold mb-2 text-stone-700">場所 <span class="text-xs font-normal text-stone-500"> </span></label>
+                    <label class="block font-bold mb-2 text-stone-700">表示する場所の名前 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
                     <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
                 <div>
@@ -290,22 +290,11 @@ async function renderRsvpPage(id) {
             timeStr = `${eventData.startTime || '未定'} 〜 ${eventData.endTime || '未定'}`;
         }
         
-        let locationHTML = '未定';
-        if (eventData.location) {
-            locationHTML = escapeHTML(eventData.location);
-        }
-        
-        // ★住所が入力されていればマップのリンクにする
-        let addressHTML = '';
-        if (eventData.address) {
-            const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventData.address)}`;
-            addressHTML = `<a href="${mapUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.address)}</a>`;
-        }
-
         const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
 
         appDiv.innerHTML = `
             <div id="eventDisplayArea" class="mb-10 relative">
+                <!-- 右上のアクションボタン群 -->
                 <div class="absolute top-0 right-0 flex items-center gap-2">
                     <button id="copyBtn" class="bg-stone-200 px-3 py-1 text-[10px] font-bold hover:bg-stone-300 transition text-stone-700 w-[84px] text-center rounded-sm border border-stone-300 whitespace-nowrap">URLをコピー</button>
                     <button id="editEventBtn" class="text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
@@ -320,12 +309,12 @@ async function renderRsvpPage(id) {
                     </div>
                     <div class="flex flex-col md:flex-row md:items-start">
                         <span class="font-bold w-20 text-stone-500 shrink-0">場所</span>
-                        <span>${locationHTML}</span>
+                        <span>${escapeHTML(eventData.location || '未定')}</span>
                     </div>
                     ${eventData.address ? `
                     <div class="flex flex-col md:flex-row md:items-start">
                         <span class="font-bold w-20 text-stone-500 shrink-0">住所</span>
-                        <span>${addressHTML}</span>
+                        <span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventData.address)}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.address)}</a></span>
                     </div>
                     ` : ''}
                     ${eventData.fee ? `
@@ -351,7 +340,7 @@ async function renderRsvpPage(id) {
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
                             <label class="text-xs font-bold text-stone-500">日にち</label>
-                            <input type="date" id="editDate" name="${rName()}" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${eventData.date || ''}">
+                            <input type="date" id="editDate" name="${rName()}" class="appearance-none min-w-0 w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${eventData.date || ''}">
                         </div>
                         <div>
                             <label class="text-xs font-bold text-stone-500">開始時間</label>
@@ -547,8 +536,16 @@ async function renderRsvpPage(id) {
             const confirmDel = await showModal('confirm', '警告', '本当に出欠データも含めて完全に削除しますか？<br>（この操作は取り消せません）');
             if (confirmDel) {
                 try {
+                    const rsvpSnaps = await getDocs(collection(db, "events", id, "rsvps"));
+                    const deletePromises = [];
+                    rsvpSnaps.forEach((d) => {
+                        deletePromises.push(deleteDoc(doc(db, "events", id, "rsvps", d.id)));
+                    });
+                    await Promise.all(deletePromises);
+
                     await deleteDoc(doc(db, "events", id));
-                    await showModal('alert', '完了', 'イベントを削除しました。トップ画面に戻ります。');
+                    
+                    await showModal('alert', '完了', 'イベントと名簿データを完全に削除しました。トップ画面に戻ります。');
                     window.location.href = "?";
                 } catch(e) {
                     await showModal('alert', 'エラー', '削除に失敗しました。');
