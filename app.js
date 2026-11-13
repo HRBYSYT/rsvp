@@ -95,6 +95,8 @@ function showModal(type, title, message) {
 // ==========================================
 const svgChevron = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
 const svgEdit = `<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
+const svgSearch = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>`;
+
 const svgMaru = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-emerald-600" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="8"></circle></svg>`;
 const svgSankaku = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-amber-500" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 4L3 19h18L12 4z" stroke-linejoin="round"></path></svg>`;
 const svgBatsu = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-rose-600" fill="none" stroke="currentColor" stroke-width="3"><path d="M7 7l10 10M17 7L7 17" stroke-linecap="round"></path></svg>`;
@@ -130,7 +132,6 @@ if (!eventId) {
 // ------------------------------------------
 function renderCreateEventPage() {
     const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
-    // ★ 選択された場所を保持する変数
     let selectedLocationQuery = "";
     
     appDiv.innerHTML = `
@@ -177,19 +178,11 @@ function renderCreateEventPage() {
             <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
                 <div class="mb-4">
                     <label class="block font-bold mb-2 text-stone-700">マップ検索用キーワード</label>
-                    <div class="flex gap-2 relative">
-                        <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="flex-1 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
-                        <button type="button" id="previewMapBtn" class="bg-stone-200 text-stone-700 px-4 py-2 font-bold rounded-sm hover:bg-stone-300 transition whitespace-nowrap">地図を確認</button>
-                        
-                        <!-- 検索結果のサジェストリスト -->
-                        <div id="locSuggestions" class="absolute top-full left-0 z-10 w-[calc(100%-110px)] bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
+                    <div class="relative">
+                        <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="場所を検索（例：高輪プリンスホテル）">
+                        <div id="locSuggestions" class="absolute z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
                     </div>
-                    
-                    <div id="mapPreviewArea" class="mt-3 hidden border border-stone-300 rounded-sm overflow-hidden bg-white">
-                        <iframe id="mapPreviewFrame" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                    </div>
-                    
-                    <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図を確認・登録できます。</p>
+                    <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図リンクが登録されます。</p>
                 </div>
                 <div>
                     <label class="block font-bold mb-2 text-stone-700">画面に表示するテキスト <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
@@ -226,11 +219,7 @@ function renderCreateEventPage() {
     let locTimeout;
 
     locQuery.addEventListener('input', (e) => {
-        // ★手入力で文字が変わったら選択状態をリセット
         selectedLocationQuery = ""; 
-        document.getElementById('mapPreviewArea').classList.add('hidden');
-        document.getElementById('mapPreviewFrame').src = '';
-
         clearTimeout(locTimeout);
         const q = e.target.value.trim();
         if (q.length < 2) {
@@ -255,8 +244,10 @@ function renderCreateEventPage() {
                         div.addEventListener('click', (ev) => {
                             const selectedName = ev.currentTarget.getAttribute('data-name');
                             locQuery.value = selectedName;
-                            // ★リストから選ばれたら変数に保持する
                             selectedLocationQuery = selectedName;
+                            if (!locDisp.value.trim()) {
+                                locDisp.value = selectedName;
+                            }
                             locSug.classList.add('hidden');
                         });
                     });
@@ -267,22 +258,6 @@ function renderCreateEventPage() {
 
     document.addEventListener('click', (e) => {
         if (!locQuery.contains(e.target) && !locSug.contains(e.target)) locSug.classList.add('hidden');
-    });
-
-    document.getElementById('previewMapBtn').addEventListener('click', async () => {
-        if (!selectedLocationQuery) {
-            await showModal('alert', '確認', '検索候補のリストから場所を選択してください。');
-            return;
-        }
-        const area = document.getElementById('mapPreviewArea');
-        const frame = document.getElementById('mapPreviewFrame');
-        
-        frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(selectedLocationQuery)}&output=embed`;
-        area.classList.remove('hidden');
-        
-        if (!locDisp.value.trim()) {
-            locDisp.value = selectedLocationQuery;
-        }
     });
 
     document.getElementById('createBtn').addEventListener('click', async () => {
@@ -297,7 +272,6 @@ function renderCreateEventPage() {
 
         const feeValue = document.getElementById('eventFee').value;
         const formattedFee = feeValue ? `${feeValue}円` : '';
-        // 最終的に登録するマップキーワード（選択されていればそれを、されていなければ空にする）
         const finalLocQuery = selectedLocationQuery ? selectedLocationQuery : '';
 
         try {
@@ -370,7 +344,7 @@ async function renderRsvpPage(id) {
         const targetQuery = eventData.locationQuery || eventData.location;
         let locationHTML = '未定';
         if (eventData.location) {
-            if (targetQuery && eventData.locationQuery !== '') { // locationQueryが意図的に空の場合はリンク化しない
+            if (targetQuery && eventData.locationQuery !== '') {
                 const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(targetQuery)}`;
                 locationHTML = `<a href="${mapUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.location)}</a>`;
             } else {
@@ -379,14 +353,17 @@ async function renderRsvpPage(id) {
         }
 
         const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
-        
-        // ★ 編集画面用の選択保持変数
         let selectedEditLocationQuery = eventData.locationQuery || "";
 
         appDiv.innerHTML = `
             <div id="eventDisplayArea" class="mb-10 relative">
-                <button id="editEventBtn" class="absolute top-0 right-0 text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-2 py-1">${svgEdit} 編集</button>
-                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] pr-16">${escapeHTML(eventData.name)}</h1>
+                <!-- 右上のアクションボタン群 -->
+                <div class="absolute top-0 right-0 flex items-center gap-3">
+                    <button id="copyBtn" class="bg-stone-200 px-3 py-1 text-xs font-bold hover:bg-stone-300 transition text-stone-700 w-24 text-center rounded-sm border border-stone-300">URLをコピー</button>
+                    <button id="editEventBtn" class="text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1">${svgEdit} 編集</button>
+                </div>
+                
+                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] pr-40">${escapeHTML(eventData.name)}</h1>
                 
                 <div class="space-y-3 mb-6 text-sm text-stone-700 leading-relaxed px-2">
                     <div class="flex flex-col md:flex-row md:items-center">
@@ -407,10 +384,6 @@ async function renderRsvpPage(id) {
 
                 ${eventData.description ? 
                     `<div class="bg-[#F4F1EA] p-6 text-sm text-stone-700 leading-loose whitespace-pre-wrap rounded-sm border border-stone-200">${escapeHTML(eventData.description)}</div>` : ''}
-
-                <div class="mt-6">
-                    <button id="copyBtn" class="bg-stone-200 px-4 py-2 text-xs font-bold hover:bg-stone-300 transition text-stone-700 w-28 text-center rounded-sm border border-stone-300">URLをコピー</button>
-                </div>
             </div>
 
             <!-- 編集フォーム -->
@@ -445,20 +418,15 @@ async function renderRsvpPage(id) {
                     <div class="grid grid-cols-1 gap-2 p-4 bg-white border border-stone-200">
                         <div>
                             <label class="text-xs font-bold text-stone-500">マップ検索用キーワード</label>
-                            <div class="flex gap-2 mb-2 relative">
-                                <input type="text" id="editLocationQuery" name="${rName()}" autocomplete="new-password" class="flex-1 border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.locationQuery || '')}">
-                                <button type="button" id="editPreviewMapBtn" class="bg-stone-200 text-stone-700 px-3 py-1 font-bold rounded-sm hover:bg-stone-300 transition whitespace-nowrap text-xs">地図を確認</button>
-                                
-                                <div id="editLocSuggestions" class="absolute top-full left-0 z-10 w-[calc(100%-80px)] bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
+                            <div class="relative">
+                                <input type="text" id="editLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.locationQuery || '')}">
+                                <div id="editLocSuggestions" class="absolute top-full left-0 z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
                             </div>
-                            <div id="editMapPreviewArea" class="mt-2 hidden border border-stone-300 rounded-sm overflow-hidden bg-white">
-                                <iframe id="editMapPreviewFrame" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                            </div>
-                            <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図を確認・登録できます。</p>
+                            <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図リンクが登録されます。</p>
                         </div>
                         <div class="mt-2">
                             <label class="text-xs font-bold text-stone-500">画面表示用のテキスト</label>
-                            <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.location || '')}">
+                            <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.location || '')}">
                         </div>
                     </div>
                     <div>
@@ -513,11 +481,20 @@ async function renderRsvpPage(id) {
                     <div id="summaryArea" class="text-sm font-bold text-stone-600 flex flex-wrap gap-4"></div>
                 </div>
                 
-                <div class="mt-4 pt-3 border-t border-stone-200 flex items-center gap-4 text-sm text-stone-600 font-bold">
-                    <span class="text-xs text-stone-400 font-normal">表示:</span>
-                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterMale" checked class="accent-[#7B2C3A]"> 男</label>
-                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterFemale" checked class="accent-[#7B2C3A]"> 女</label>
-                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterOther" checked class="accent-[#7B2C3A]"> その他</label>
+                <div class="mt-4 pt-3 border-t border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4 text-sm text-stone-600 font-bold">
+                        <span class="text-xs text-stone-400 font-normal">表示:</span>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterMale" checked class="accent-[#7B2C3A]"> 男</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterFemale" checked class="accent-[#7B2C3A]"> 女</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterOther" checked class="accent-[#7B2C3A]"> その他</label>
+                    </div>
+                    <!-- 名前検索窓の追加 -->
+                    <div class="w-full md:w-64 relative">
+                        <input type="text" id="searchName" name="${rName()}" class="w-full border border-stone-300 rounded-sm p-2 text-sm focus:outline-none focus:border-[#7B2C3A] bg-white transition pr-8" placeholder="名前で検索">
+                        <div class="absolute inset-y-0 right-0 flex items-center px-2 text-stone-400">
+                            ${svgSearch}
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -563,7 +540,6 @@ async function renderRsvpPage(id) {
             }
         });
 
-        // ★ 編集画面のサジェストとマッププレビュー制御
         const editLocQuery = document.getElementById('editLocationQuery');
         const editLocDisp = document.getElementById('editLocation');
         const editLocSug = document.getElementById('editLocSuggestions');
@@ -571,9 +547,6 @@ async function renderRsvpPage(id) {
 
         editLocQuery.addEventListener('input', (e) => {
             selectedEditLocationQuery = ""; 
-            document.getElementById('editMapPreviewArea').classList.add('hidden');
-            document.getElementById('editMapPreviewFrame').src = '';
-
             clearTimeout(editLocTimeout);
             const q = e.target.value.trim();
             if (q.length < 2) {
@@ -599,6 +572,9 @@ async function renderRsvpPage(id) {
                                 const selectedName = ev.currentTarget.getAttribute('data-name');
                                 editLocQuery.value = selectedName;
                                 selectedEditLocationQuery = selectedName;
+                                if (!editLocDisp.value.trim()) {
+                                    editLocDisp.value = selectedName;
+                                }
                                 editLocSug.classList.add('hidden');
                             });
                         });
@@ -609,22 +585,6 @@ async function renderRsvpPage(id) {
 
         document.addEventListener('click', (e) => {
             if (!editLocQuery.contains(e.target) && !editLocSug.contains(e.target)) editLocSug.classList.add('hidden');
-        });
-
-        document.getElementById('editPreviewMapBtn').addEventListener('click', async () => {
-            if (!selectedEditLocationQuery) {
-                await showModal('alert', '確認', '検索候補のリストから場所を選択してください。');
-                return;
-            }
-            const area = document.getElementById('editMapPreviewArea');
-            const frame = document.getElementById('editMapPreviewFrame');
-            
-            frame.src = `https://maps.google.com/maps?q=${encodeURIComponent(selectedEditLocationQuery)}&output=embed`;
-            area.classList.remove('hidden');
-            
-            if (!editLocDisp.value.trim()) {
-                editLocDisp.value = selectedEditLocationQuery;
-            }
         });
 
         const editStart = document.getElementById('editStartTime');
@@ -748,6 +708,7 @@ async function renderRsvpPage(id) {
 
         const filters = ['filterMale', 'filterFemale', 'filterOther'];
         filters.forEach(f => document.getElementById(f).addEventListener('change', renderListDOM));
+        document.getElementById('searchName').addEventListener('input', renderListDOM);
 
         onSnapshot(collection(db, "events", id, "rsvps"), (snapshot) => {
             rsvpDataList = [];
@@ -764,6 +725,7 @@ async function renderRsvpPage(id) {
             const showMale = document.getElementById('filterMale').checked;
             const showFemale = document.getElementById('filterFemale').checked;
             const showOther = document.getElementById('filterOther').checked;
+            const searchNameStr = document.getElementById('searchName').value.trim().toLowerCase();
 
             const genderOrder = { '男': 1, '女': 2, 'その他': 3 };
             rsvpDataList.sort((a, b) => {
@@ -781,6 +743,9 @@ async function renderRsvpPage(id) {
                 if (gender === '男' && !showMale) return;
                 if (gender === '女' && !showFemale) return;
                 if (gender === 'その他' && !showOther) return;
+
+                const fullNameForSearch = `${data.lastName || ''} ${data.firstName || ''}`.trim().toLowerCase();
+                if (searchNameStr && !fullNameForSearch.includes(searchNameStr)) return;
 
                 visibleTotal++;
                 
