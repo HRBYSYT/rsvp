@@ -177,7 +177,7 @@ function renderCreateEventPage() {
 
             <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
                 <div class="mb-4">
-                    <label class="block font-bold mb-2 text-stone-700">表示する場所の名前 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
+                    <label class="block font-bold mb-2 text-stone-700">表示する場所 <span class="text-xs font-normal text-stone-500"> </span></label>
                     <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
                 <div>
