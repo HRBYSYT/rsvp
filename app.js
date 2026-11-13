@@ -170,7 +170,7 @@ function renderCreateEventPage() {
             <div>
                 <label class="block font-bold mb-2 text-stone-700">参加費</label>
                 <div class="flex items-center gap-2">
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventFee" name="${rName()}" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-1/3 md:w-1/4 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition text-right">
+                    <input type="text" id="eventFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/3 md:w-1/4 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition text-right">
                     <span class="text-stone-700 font-bold">円</span>
                 </div>
             </div>
@@ -180,7 +180,8 @@ function renderCreateEventPage() {
                     <label class="block font-bold mb-2 text-stone-700">マップ検索用キーワード</label>
                     <div class="relative">
                         <input type="text" id="eventLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition" placeholder="場所を検索（例：高輪プリンスホテル）">
-                        <div id="locSuggestions" class="absolute z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
+                        
+                        <div id="locSuggestions" class="absolute top-full left-0 z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
                     </div>
                     <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図リンクが登録されます。</p>
                 </div>
@@ -233,9 +234,9 @@ function renderCreateEventPage() {
                 if (data.length > 0) {
                     locSug.innerHTML = data.map(item => {
                         const name = item.name || item.display_name.split(',')[0];
-                        return `<div class="p-3 hover:bg-[#F9F8F6] cursor-pointer border-b border-stone-100 text-sm text-stone-700 transition" data-name="${name}">
-                                    <div class="font-bold">${name}</div>
-                                    <div class="text-xs text-stone-400 truncate mt-1">${item.display_name}</div>
+                        const address = item.display_name;
+                        return `<div class="p-3 hover:bg-[#F9F8F6] cursor-pointer border-b border-stone-100 text-sm text-stone-700 transition" data-name="${name}" data-address="${address}">
+                                    <div class="font-bold truncate">${name} <span class="text-[10px] font-normal text-stone-400 ml-2">${address}</span></div>
                                 </div>`;
                     }).join('');
                     locSug.classList.remove('hidden');
@@ -243,10 +244,11 @@ function renderCreateEventPage() {
                     locSug.querySelectorAll('div[data-name]').forEach(div => {
                         div.addEventListener('click', (ev) => {
                             const selectedName = ev.currentTarget.getAttribute('data-name');
-                            locQuery.value = selectedName;
-                            selectedLocationQuery = selectedName;
+                            const selectedAddress = ev.currentTarget.getAttribute('data-address');
+                            locQuery.value = selectedAddress; 
+                            selectedLocationQuery = selectedAddress;
                             if (!locDisp.value.trim()) {
-                                locDisp.value = selectedName;
+                                locDisp.value = selectedName; 
                             }
                             locSug.classList.add('hidden');
                         });
@@ -270,8 +272,8 @@ function renderCreateEventPage() {
         document.getElementById('createBtn').textContent = "作成中...";
         document.getElementById('createBtn').disabled = true;
 
-        const feeValue = document.getElementById('eventFee').value;
-        const formattedFee = feeValue ? `${feeValue}円` : '';
+        const feeValue = document.getElementById('eventFee').value.replace(/[^0-9]/g, '');
+        const formattedFee = feeValue ? `${Number(feeValue).toLocaleString()}円` : '';
         const finalLocQuery = selectedLocationQuery ? selectedLocationQuery : '';
 
         try {
@@ -358,12 +360,12 @@ async function renderRsvpPage(id) {
         appDiv.innerHTML = `
             <div id="eventDisplayArea" class="mb-10 relative">
                 <!-- 右上のアクションボタン群 -->
-                <div class="absolute top-0 right-0 flex items-center gap-3">
-                    <button id="copyBtn" class="bg-stone-200 px-3 py-1 text-xs font-bold hover:bg-stone-300 transition text-stone-700 w-24 text-center rounded-sm border border-stone-300">URLをコピー</button>
-                    <button id="editEventBtn" class="text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1">${svgEdit} 編集</button>
+                <div class="absolute top-0 right-0 flex items-center gap-2">
+                    <button id="copyBtn" class="bg-stone-200 px-3 py-1 text-[10px] font-bold hover:bg-stone-300 transition text-stone-700 w-[84px] text-center rounded-sm border border-stone-300 whitespace-nowrap">URLをコピー</button>
+                    <button id="editEventBtn" class="text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
                 </div>
                 
-                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] pr-40">${escapeHTML(eventData.name)}</h1>
+                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] pr-36">${escapeHTML(eventData.name)}</h1>
                 
                 <div class="space-y-3 mb-6 text-sm text-stone-700 leading-relaxed px-2">
                     <div class="flex flex-col md:flex-row md:items-center">
@@ -411,7 +413,7 @@ async function renderRsvpPage(id) {
                     <div>
                         <label class="text-xs font-bold text-stone-500">参加費</label>
                         <div class="flex items-center gap-2">
-                            <input type="text" inputmode="numeric" pattern="[0-9]*" id="editFee" name="${rName()}" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-1/3 md:w-1/4 border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white text-right" value="${escapeHTML(eventData.fee ? eventData.fee.replace('円','') : '')}">
+                            <input type="text" id="editFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/3 md:w-1/4 border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white text-right" value="${escapeHTML(eventData.fee ? eventData.fee.replace('円','') : '')}">
                             <span class="text-stone-700 font-bold">円</span>
                         </div>
                     </div>
@@ -419,14 +421,15 @@ async function renderRsvpPage(id) {
                         <div>
                             <label class="text-xs font-bold text-stone-500">マップ検索用キーワード</label>
                             <div class="relative">
-                                <input type="text" id="editLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.locationQuery || '')}">
+                                <input type="text" id="editLocationQuery" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.locationQuery || '')}">
+                                
                                 <div id="editLocSuggestions" class="absolute top-full left-0 z-10 w-full bg-white border border-stone-200 shadow-xl max-h-48 overflow-y-auto hidden mt-1"></div>
                             </div>
                             <p class="text-xs text-stone-500 mt-2">※下に表示される候補リストから選んだ場合のみ、地図リンクが登録されます。</p>
                         </div>
                         <div class="mt-2">
                             <label class="text-xs font-bold text-stone-500">画面表示用のテキスト</label>
-                            <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.location || '')}">
+                            <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A]" value="${escapeHTML(eventData.location || '')}">
                         </div>
                     </div>
                     <div>
@@ -488,7 +491,6 @@ async function renderRsvpPage(id) {
                         <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterFemale" checked class="accent-[#7B2C3A]"> 女</label>
                         <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterOther" checked class="accent-[#7B2C3A]"> その他</label>
                     </div>
-                    <!-- 名前検索窓の追加 -->
                     <div class="w-full md:w-64 relative">
                         <input type="text" id="searchName" name="${rName()}" class="w-full border border-stone-300 rounded-sm p-2 text-sm focus:outline-none focus:border-[#7B2C3A] bg-white transition pr-8" placeholder="名前で検索">
                         <div class="absolute inset-y-0 right-0 flex items-center px-2 text-stone-400">
@@ -560,9 +562,9 @@ async function renderRsvpPage(id) {
                     if (data.length > 0) {
                         editLocSug.innerHTML = data.map(item => {
                             const name = item.name || item.display_name.split(',')[0];
-                            return `<div class="p-3 hover:bg-[#F9F8F6] cursor-pointer border-b border-stone-100 text-sm text-stone-700 transition" data-name="${name}">
-                                        <div class="font-bold">${name}</div>
-                                        <div class="text-xs text-stone-400 truncate mt-1">${item.display_name}</div>
+                            const address = item.display_name;
+                            return `<div class="p-3 hover:bg-[#F9F8F6] cursor-pointer border-b border-stone-100 text-sm text-stone-700 transition" data-name="${name}" data-address="${address}">
+                                        <div class="font-bold truncate">${name} <span class="text-[10px] font-normal text-stone-400 ml-2">${address}</span></div>
                                     </div>`;
                         }).join('');
                         editLocSug.classList.remove('hidden');
@@ -570,8 +572,9 @@ async function renderRsvpPage(id) {
                         editLocSug.querySelectorAll('div[data-name]').forEach(div => {
                             div.addEventListener('click', (ev) => {
                                 const selectedName = ev.currentTarget.getAttribute('data-name');
-                                editLocQuery.value = selectedName;
-                                selectedEditLocationQuery = selectedName;
+                                const selectedAddress = ev.currentTarget.getAttribute('data-address');
+                                editLocQuery.value = selectedAddress;
+                                selectedEditLocationQuery = selectedAddress;
                                 if (!editLocDisp.value.trim()) {
                                     editLocDisp.value = selectedName;
                                 }
@@ -615,8 +618,8 @@ async function renderRsvpPage(id) {
             const newName = document.getElementById('editName').value;
             if (!newName) return await showModal('alert', 'エラー', 'イベント名を入力してください。');
             
-            const feeValue = document.getElementById('editFee').value;
-            const formattedFee = feeValue ? `${feeValue}円` : '';
+            const feeValue = document.getElementById('editFee').value.replace(/[^0-9]/g, '');
+            const formattedFee = feeValue ? `${Number(feeValue).toLocaleString()}円` : '';
             const finalLocQuery = selectedEditLocationQuery ? selectedEditLocationQuery : '';
 
             document.getElementById('saveEditBtn').textContent = "保存中...";
