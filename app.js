@@ -227,7 +227,7 @@ function renderCreateEventPage() {
 
             <div class="bg-white p-4 border border-stone-200 rounded-sm">
                 <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
-                    <input type="checkbox" id="useCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリー（グループ枠）を追加する
+                    <input type="checkbox" id="useCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリーを追加する
                 </label>
                 <div id="categorySetupArea" class="hidden mt-4 space-y-3 pl-2 md:pl-6 border-l-2 border-stone-200">
                     <div id="categoryInputsContainer" class="space-y-1 w-full md:w-2/3">
@@ -456,7 +456,7 @@ async function renderRsvpPage(id) {
                     </div>
                     <div class="grid grid-cols-1 gap-2 p-3 md:p-4 bg-white border border-stone-200">
                         <div>
-                            <label class="text-xs font-bold text-stone-500">表示する場所の名前</label>
+                            <label class="text-xs font-bold text-stone-500">場所</label>
                             <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.location || '')}">
                         </div>
                         <div class="mt-2">
