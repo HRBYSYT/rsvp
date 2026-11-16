@@ -1,6 +1,7 @@
-// Firebase SDKのインポート
+// Firebase SDKとSortableJS(ドラッグ並び替え用)のインポート
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDoc, doc, onSnapshot, serverTimestamp, updateDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import Sortable from 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.1/modular/sortable.esm.js';
 
 // ==========================================
 // Firebase設定
@@ -21,13 +22,21 @@ const db = getFirestore(app);
 const urlParams = new URLSearchParams(window.location.search);
 const eventId = urlParams.get('id');
 
-// ★ スマホでの自動ズームを防ぐため、メタタグを動的に追加
+// スマホでの自動ズームを防ぐため、メタタグを追加
 if (!document.querySelector("meta[name=viewport]")) {
     const meta = document.createElement('meta');
     meta.name = 'viewport';
     meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
     document.getElementsByTagName('head')[0].appendChild(meta);
 }
+
+// 横スクロールバーを非表示にするためのCSSを注入
+const style = document.createElement('style');
+style.innerHTML = `
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+`;
+document.head.appendChild(style);
 
 document.body.className = "bg-[#EFECE6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white relative overflow-x-hidden text-base";
 const appDiv = document.getElementById('app');
@@ -105,9 +114,9 @@ const svgChevron = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewB
 const svgEdit = `<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
 const svgSearch = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>`;
 const svgPlus = `<svg class="w-3 h-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>`;
-const svgUp = `<svg class="w-4 h-4 text-stone-500 hover:text-[#7B2C3A] cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>`;
-const svgDown = `<svg class="w-4 h-4 text-stone-500 hover:text-[#7B2C3A] cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
-const svgTrash = `<svg class="w-4 h-4 text-stone-400 hover:text-red-500 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
+const svgTrash = `<svg class="w-5 h-5 text-stone-400 hover:text-red-500 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
+// ドラッグ用ハンドルアイコン
+const svgDrag = `<svg class="w-5 h-5 text-stone-400 cursor-grab touch-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>`;
 
 const svgMaru = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-emerald-600" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="8"></circle></svg>`;
 const svgSankaku = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-amber-500" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 4L3 19h18L12 4z" stroke-linejoin="round"></path></svg>`;
@@ -134,27 +143,17 @@ function formatDateDisplay(dateStr) {
 }
 
 // ------------------------------------------
-// カテゴリ入力UI（新規＆編集）の共通管理
+// カテゴリ入力UI（ドラッグ対応）の共通管理
 // ------------------------------------------
 function createCategoryInputRow(value = '') {
     const row = document.createElement('div');
-    row.className = "flex items-center gap-2 category-row";
+    row.className = "flex items-center gap-2 category-row bg-white p-1 rounded-sm border border-transparent hover:border-stone-200 transition";
     row.innerHTML = `
+        <span class="drag-handle p-1">${svgDrag}</span>
         <input type="text" class="cat-input flex-1 border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" value="${escapeHTML(value)}" placeholder="">
-        <div class="flex flex-col">
-            <span class="cat-up">${svgUp}</span>
-            <span class="cat-down">${svgDown}</span>
-        </div>
-        <span class="cat-del ml-2">${svgTrash}</span>
+        <span class="cat-del ml-1 p-1">${svgTrash}</span>
     `;
     
-    // 上下移動・削除イベント
-    row.querySelector('.cat-up').addEventListener('click', () => {
-        if (row.previousElementSibling) row.parentNode.insertBefore(row, row.previousElementSibling);
-    });
-    row.querySelector('.cat-down').addEventListener('click', () => {
-        if (row.nextElementSibling) row.parentNode.insertBefore(row.nextElementSibling, row);
-    });
     row.querySelector('.cat-del').addEventListener('click', () => {
         row.remove();
     });
@@ -226,16 +225,15 @@ function renderCreateEventPage() {
                 </div>
             </div>
 
-            <!-- カテゴリー追加セクション -->
             <div class="bg-white p-4 border border-stone-200 rounded-sm">
                 <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
                     <input type="checkbox" id="useCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリー（グループ枠）を追加する
                 </label>
                 <div id="categorySetupArea" class="hidden mt-4 space-y-3 pl-2 md:pl-6 border-l-2 border-stone-200">
-                    <div id="categoryInputsContainer" class="space-y-2 w-full md:w-2/3">
+                    <div id="categoryInputsContainer" class="space-y-1 w-full md:w-2/3">
                         <!-- ここにJSで枠を追加 -->
                     </div>
-                    <button type="button" id="addCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-2">${svgPlus} 枠を追加</button>
+                    <button type="button" id="addCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-2 ml-7">${svgPlus} 枠を追加</button>
                 </div>
             </div>
 
@@ -262,10 +260,16 @@ function renderCreateEventPage() {
         endSel.innerHTML = generateTimeOptions(endSel.value, startSel.value);
     });
 
-    // カテゴリーの初期設定
+    // カテゴリーの初期設定とSortable適用
     const catContainer = document.getElementById('categoryInputsContainer');
     catContainer.appendChild(createCategoryInputRow());
     catContainer.appendChild(createCategoryInputRow());
+    
+    new Sortable(catContainer, {
+        animation: 150,
+        handle: '.drag-handle',
+        ghostClass: 'opacity-50'
+    });
 
     document.getElementById('useCategoriesToggle').addEventListener('change', (e) => {
         const area = document.getElementById('categorySetupArea');
@@ -292,7 +296,6 @@ function renderCreateEventPage() {
         const feeValue = document.getElementById('eventFee').value.replace(/[^0-9]/g, '');
         const formattedFee = feeValue ? `${Number(feeValue).toLocaleString()}円` : '';
 
-        // カテゴリーの取得（並び順通り）
         let categories = [];
         if (document.getElementById('useCategoriesToggle').checked) {
             const inputs = document.querySelectorAll('#categoryInputsContainer .cat-input');
@@ -312,11 +315,12 @@ function renderCreateEventPage() {
                 location: document.getElementById('eventLocation').value,
                 address: document.getElementById('eventAddress').value,
                 description: document.getElementById('eventDesc').value,
-                categories: categories, // ★カテゴリー保存
+                categories: categories,
                 pin: pin,
                 createdAt: serverTimestamp()
             });
-            window.location.href = `?id=${docRef.id}`;
+            // 保存完了後、確実に画面を切り替える
+            window.location.assign(window.location.pathname + '?id=' + docRef.id);
         } catch (e) {
             await showModal('alert', 'エラー', '通信エラーが発生しました。設定を確認してください。');
             document.getElementById('createBtn').textContent = "イベントページを作成する";
@@ -384,18 +388,15 @@ async function renderRsvpPage(id) {
         const hasCategories = eventCategories.length > 0;
         const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
 
-        // ★ タイトルとボタンの1行配置
-        // タイトルが長い場合は省略（truncate）されず折り返す。ボタンは右上に固定
         appDiv.innerHTML = `
-            <div id="eventDisplayArea" class="mb-10 relative">
-                
-                <div class="flex justify-between items-start mb-8 pb-4 border-b-2 border-[#7B2C3A]">
-                    <h1 class="text-2xl md:text-3xl font-bold text-stone-800 pr-2 md:pr-4 break-words leading-tight w-[60%] md:w-auto">${escapeHTML(eventData.name)}</h1>
-                    <div class="flex items-center gap-2 shrink-0 pt-1">
-                        <button id="copyBtn" class="bg-stone-200 px-3 py-1.5 md:py-1 text-[10px] md:text-xs font-bold hover:bg-stone-300 transition text-stone-700 w-24 text-center rounded-sm border border-stone-300 whitespace-nowrap">URLをコピー</button>
-                        <button id="editEventBtn" class="text-[11px] md:text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
-                    </div>
+            <div id="eventDisplayArea" class="mb-10 relative pt-10 md:pt-6">
+                <!-- 右上のアクションボタン群 (絶対配置でタイトルと分離) -->
+                <div class="absolute top-0 right-0 flex items-center gap-2 z-10">
+                    <button id="copyBtn" class="bg-stone-200 px-2 py-1 text-[10px] font-bold hover:bg-stone-300 transition text-stone-700 rounded-sm border border-stone-300 whitespace-nowrap shadow-sm">URLをコピー</button>
+                    <button id="editEventBtn" class="text-[10px] text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
                 </div>
+                
+                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] break-words leading-tight w-full">${escapeHTML(eventData.name)}</h1>
                 
                 <div class="space-y-3 mb-6 text-sm text-stone-700 leading-relaxed px-1">
                     <div class="flex flex-col md:flex-row md:items-center">
@@ -469,10 +470,10 @@ async function renderRsvpPage(id) {
                             <input type="checkbox" id="editUseCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer" ${hasCategories ? 'checked' : ''}> 名簿にカテゴリー枠を追加する
                         </label>
                         <div id="editCategorySetupArea" class="${hasCategories ? '' : 'hidden'} mt-4 space-y-3 pl-2 md:pl-6 border-l-2 border-stone-200">
-                            <div id="editCategoryInputsContainer" class="space-y-2 w-full md:w-2/3">
+                            <div id="editCategoryInputsContainer" class="space-y-1 w-full md:w-2/3">
                                 <!-- JSで描画 -->
                             </div>
-                            <button type="button" id="editAddCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-2">${svgPlus} 枠を追加</button>
+                            <button type="button" id="editAddCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-2 ml-7">${svgPlus} 枠を追加</button>
                         </div>
                     </div>
 
@@ -551,7 +552,6 @@ async function renderRsvpPage(id) {
                             ${eventCategories.map(c => `
                                 <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="cat-filter accent-[#7B2C3A]" value="${escapeHTML(c)}" checked> ${escapeHTML(c)}</label>
                             `).join('')}
-                            <!-- ★ 「未設定(旧データ)」ではなく単に「未設定」とする -->
                             <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="cat-filter accent-[#7B2C3A]" value="未設定" checked> 未設定</label>
                         </div>
                         ` : ''}
@@ -573,7 +573,7 @@ async function renderRsvpPage(id) {
             </form>
             
             <div class="mt-16 pt-8 border-t border-stone-200 flex flex-col items-center gap-4">
-                <a href="?" class="text-xs text-stone-500 hover:text-[#7B2C3A] font-bold transition">別のイベントを新しく作る</a>
+                <a href="${window.location.pathname}" target="_blank" rel="noopener noreferrer" class="text-xs text-stone-500 hover:text-[#7B2C3A] font-bold transition">別のイベントを新しく作る</a>
                 <button id="deleteEventBtn" class="text-[10px] text-stone-400 hover:text-red-500 transition">このイベントを完全に削除する</button>
             </div>
         `;
@@ -605,13 +605,18 @@ async function renderRsvpPage(id) {
         // 編集モードでのカテゴリー追加機能
         const editCatContainer = document.getElementById('editCategoryInputsContainer');
         if (editCatContainer) {
-            // 初期描画
             if (hasCategories) {
                 eventCategories.forEach(c => editCatContainer.appendChild(createCategoryInputRow(c)));
             } else {
                 editCatContainer.appendChild(createCategoryInputRow());
                 editCatContainer.appendChild(createCategoryInputRow());
             }
+
+            new Sortable(editCatContainer, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'opacity-50'
+            });
 
             document.getElementById('editUseCategoriesToggle').addEventListener('change', (e) => {
                 const area = document.getElementById('editCategorySetupArea');
@@ -656,7 +661,6 @@ async function renderRsvpPage(id) {
             const feeValue = document.getElementById('editFee').value.replace(/[^0-9]/g, '');
             const formattedFee = feeValue ? `${Number(feeValue).toLocaleString()}円` : '';
 
-            // カテゴリーの取得（並び順を反映）
             let newCategories = [];
             const toggle = document.getElementById('editUseCategoriesToggle');
             if (toggle && toggle.checked) {
@@ -678,9 +682,9 @@ async function renderRsvpPage(id) {
                     location: document.getElementById('editLocation').value,
                     address: document.getElementById('editAddress').value,
                     description: document.getElementById('editDesc').value,
-                    categories: newCategories // ★更新
+                    categories: newCategories
                 });
-                window.location.reload();
+                window.location.assign(window.location.href);
             } catch(e) {
                 await showModal('alert', 'エラー', 'エラーが発生しました');
                 document.getElementById('saveEditBtn').textContent = "保存する";
@@ -705,7 +709,7 @@ async function renderRsvpPage(id) {
                     await deleteDoc(doc(db, "events", id));
                     
                     await showModal('alert', '完了', 'イベントと名簿データを完全に削除しました。トップ画面に戻ります。');
-                    window.location.href = "?";
+                    window.location.assign(window.location.pathname);
                 } catch(e) {
                     await showModal('alert', 'エラー', '削除に失敗しました。');
                 }
@@ -798,12 +802,10 @@ async function renderRsvpPage(id) {
 
             const searchNameStr = document.getElementById('searchName').value.trim().toLowerCase();
 
-            // ★ カテゴリ順にソートするロジック（未設定は最後にする）
             rsvpDataList.sort((a, b) => {
                 let catIndexA = eventCategories.indexOf(a.category);
                 let catIndexB = eventCategories.indexOf(b.category);
                 
-                // 設定されていない、または現在のカテゴリ配列に存在しない場合は「未設定(無限大)」扱いにする
                 if (catIndexA === -1) catIndexA = 999;
                 if (catIndexB === -1) catIndexB = 999;
                 
@@ -815,13 +817,11 @@ async function renderRsvpPage(id) {
             let visibleTotal = 0;
 
             rsvpDataList.forEach((data) => {
-                // 性別フィルター
                 const gender = data.gender || 'その他';
                 if (gender === '男' && !showMale) return;
                 if (gender === '女' && !showFemale) return;
                 if (gender === 'その他' && !showOther) return;
 
-                // カテゴリフィルター
                 if (hasCategories) {
                     let effectiveCat = data.category || '未設定';
                     if (effectiveCat !== '未設定' && !eventCategories.includes(effectiveCat)) {
@@ -830,7 +830,6 @@ async function renderRsvpPage(id) {
                     if (activeCats.length > 0 && !activeCats.includes(effectiveCat)) return;
                 }
 
-                // 名前検索フィルター
                 const fullNameForSearch = `${data.lastName || ''} ${data.firstName || ''}`.trim().toLowerCase();
                 if (searchNameStr && !fullNameForSearch.includes(searchNameStr)) return;
 
@@ -906,8 +905,8 @@ async function renderRsvpPage(id) {
                         </div>
                     </div>
                     
-                    <div class="flex-1 min-w-0 relative pl-1 md:pl-2">
-                        <input type="text" name="${rName()}" class="comment-input w-full min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-base py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="クリックしてコメント追加">
+                    <div class="flex-1 min-w-0 relative pl-1 md:pl-2 overflow-x-auto hide-scrollbar">
+                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[180px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-base py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
                     </div>
                 `;
                 list.appendChild(row);
