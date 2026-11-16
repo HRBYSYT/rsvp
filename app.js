@@ -21,16 +21,16 @@ const db = getFirestore(app);
 const urlParams = new URLSearchParams(window.location.search);
 const eventId = urlParams.get('id');
 
-document.body.className = "bg-[#EFECE6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white relative";
+document.body.className = "bg-[#EFECE6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white relative overflow-x-hidden";
 const appDiv = document.getElementById('app');
-appDiv.className = "bg-[#FCFBF7] p-6 md:p-10 shadow-xl border border-stone-200 border-t-[6px] border-t-[#7B2C3A] rounded-sm max-w-3xl mx-auto mt-8 mb-20";
+appDiv.className = "bg-[#FCFBF7] p-4 md:p-10 shadow-xl border border-stone-200 border-t-[6px] border-t-[#7B2C3A] rounded-sm w-full max-w-4xl mx-auto mt-4 md:mt-8 mb-20";
 
 // ==========================================
 // 共通のカスタムモーダル機能
 // ==========================================
 const modalHTML = `
-    <div id="customModal" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900 bg-opacity-60 hidden backdrop-blur-sm transition-opacity">
-        <div class="bg-white rounded-sm shadow-2xl p-6 w-[90%] max-w-sm">
+    <div id="customModal" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900 bg-opacity-60 hidden backdrop-blur-sm transition-opacity px-4">
+        <div class="bg-white rounded-sm shadow-2xl p-6 w-full max-w-sm">
             <h3 id="modalTitle" class="font-bold text-lg mb-3 text-[#7B2C3A] border-b border-stone-200 pb-2"></h3>
             <p id="modalMessage" class="text-sm text-stone-700 mb-5 leading-relaxed"></p>
             <input type="text" id="modalInput" class="hidden w-full border border-stone-300 p-3 rounded-sm mb-5 focus:border-[#7B2C3A] focus:outline-none text-center tracking-widest text-xl bg-stone-50" inputmode="numeric" pattern="[0-9]*" maxlength="4">
@@ -64,7 +64,7 @@ function showModal(type, title, message) {
         } else if (type === 'alert') {
             inputEl.classList.add('hidden');
             cancelBtn.classList.add('hidden');
-        } else { // confirm
+        } else {
             inputEl.classList.add('hidden');
             cancelBtn.classList.remove('hidden');
         }
@@ -96,6 +96,7 @@ function showModal(type, title, message) {
 const svgChevron = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
 const svgEdit = `<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
 const svgSearch = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>`;
+const svgPlus = `<svg class="w-3 h-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>`;
 
 const svgMaru = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-emerald-600" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="8"></circle></svg>`;
 const svgSankaku = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-amber-500" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 4L3 19h18L12 4z" stroke-linejoin="round"></path></svg>`;
@@ -136,7 +137,7 @@ function renderCreateEventPage() {
     
     appDiv.innerHTML = `
         <h1 class="text-2xl font-bold mb-8 text-center text-[#7B2C3A] tracking-wider">新規イベント作成</h1>
-        <form autocomplete="off" onsubmit="return false;" class="space-y-6 text-sm">
+        <form autocomplete="off" onsubmit="return false;" class="space-y-6 text-sm px-1">
             <div>
                 <label class="block font-bold mb-2 text-stone-700">イベント名 <span class="text-[#7B2C3A]">*</span></label>
                 <input type="text" id="eventName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition">
@@ -170,7 +171,7 @@ function renderCreateEventPage() {
             <div>
                 <label class="block font-bold mb-2 text-stone-700">参加費</label>
                 <div class="flex items-center gap-2">
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/3 md:w-1/4 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition text-right">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/2 md:w-1/4 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] bg-white transition text-right">
                     <span class="text-stone-700 font-bold">円</span>
                 </div>
             </div>
@@ -186,6 +187,21 @@ function renderCreateEventPage() {
                 </div>
             </div>
 
+            <!-- カテゴリー追加セクション -->
+            <div class="bg-white p-4 border border-stone-200 rounded-sm">
+                <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
+                    <input type="checkbox" id="useCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリー（グループ）を追加する
+                </label>
+                <div id="categorySetupArea" class="hidden mt-4 space-y-3 pl-6 border-l-2 border-stone-200">
+                    <p class="text-xs text-stone-500 mb-2">※「会社・友人」や「1部・2部」などのグループ分けを作れます。</p>
+                    <div id="categoryInputsContainer" class="space-y-2">
+                        <input type="text" class="cat-input w-full md:w-2/3 border border-stone-300 rounded-sm p-2 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" placeholder="カテゴリー名 (例: 会社関係)">
+                        <input type="text" class="cat-input w-full md:w-2/3 border border-stone-300 rounded-sm p-2 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" placeholder="カテゴリー名 (例: 友人)">
+                    </div>
+                    <button type="button" id="addCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-1">${svgPlus} 入力欄を追加</button>
+                </div>
+            </div>
+
             <div>
                 <label class="block font-bold mb-2 text-stone-700">詳細・備考</label>
                 <textarea id="eventDesc" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 h-32 focus:outline-none focus:border-[#7B2C3A] bg-white transition"></textarea>
@@ -194,10 +210,10 @@ function renderCreateEventPage() {
             <div class="border-t border-stone-200 pt-6 mt-6">
                 <label class="block font-bold mb-2 text-[#7B2C3A]">管理用パスワード（数字4桁） <span class="text-[#7B2C3A]">*</span></label>
                 <p class="text-xs text-stone-500 mb-2">※イベント内容の編集・削除時に必要になります。</p>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventPin" name="${rName()}" maxlength="4" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-full md:w-1/3 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] tracking-widest text-lg bg-white transition text-center">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventPin" name="${rName()}" maxlength="4" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-1/2 md:w-1/3 border border-stone-300 rounded-sm p-3 focus:outline-none focus:border-[#7B2C3A] tracking-widest text-lg bg-white transition text-center">
             </div>
 
-            <div class="pt-4">
+            <div class="pt-4 pb-10">
                 <button id="createBtn" type="button" class="w-full bg-[#7B2C3A] text-white font-bold py-4 rounded-sm hover:bg-[#5A1F29] transition shadow-md tracking-wider">イベントページを作成する</button>
             </div>
         </form>
@@ -207,6 +223,23 @@ function renderCreateEventPage() {
     const endSel = document.getElementById('eventEndTime');
     startSel.addEventListener('change', () => {
         endSel.innerHTML = generateTimeOptions(endSel.value, startSel.value);
+    });
+
+    // カテゴリーの開閉と追加
+    document.getElementById('useCategoriesToggle').addEventListener('change', (e) => {
+        const area = document.getElementById('categorySetupArea');
+        if (e.target.checked) area.classList.remove('hidden');
+        else area.classList.add('hidden');
+    });
+
+    document.getElementById('addCategoryInputBtn').addEventListener('click', () => {
+        const container = document.getElementById('categoryInputsContainer');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = "cat-input w-full md:w-2/3 border border-stone-300 rounded-sm p-2 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition";
+        input.placeholder = "追加のカテゴリー名";
+        container.appendChild(input);
+        input.focus();
     });
 
     document.getElementById('createBtn').addEventListener('click', async () => {
@@ -222,6 +255,16 @@ function renderCreateEventPage() {
         const feeValue = document.getElementById('eventFee').value.replace(/[^0-9]/g, '');
         const formattedFee = feeValue ? `${Number(feeValue).toLocaleString()}円` : '';
 
+        // カテゴリーの取得
+        let categories = [];
+        if (document.getElementById('useCategoriesToggle').checked) {
+            const inputs = document.querySelectorAll('.cat-input');
+            inputs.forEach(inp => {
+                const val = inp.value.trim();
+                if (val && !categories.includes(val)) categories.push(val);
+            });
+        }
+
         try {
             const docRef = await addDoc(collection(db, "events"), {
                 name: name,
@@ -232,6 +275,7 @@ function renderCreateEventPage() {
                 location: document.getElementById('eventLocation').value,
                 address: document.getElementById('eventAddress').value,
                 description: document.getElementById('eventDesc').value,
+                categories: categories, // ★カテゴリー保存
                 pin: pin,
                 createdAt: serverTimestamp()
             });
@@ -290,31 +334,105 @@ async function renderRsvpPage(id) {
             timeStr = `${eventData.startTime || '未定'} 〜 ${eventData.endTime || '未定'}`;
         }
         
+        let locationHTML = '未定';
+        if (eventData.location) locationHTML = escapeHTML(eventData.location);
+
+        let addressHTML = '';
+        if (eventData.address) {
+            const addressMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventData.address)}`;
+            addressHTML = `<a href="${addressMapUrl}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.address)}</a>`;
+        }
+
+        const eventCategories = eventData.categories || [];
+        const hasCategories = eventCategories.length > 0;
         const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
+
+        // カテゴリー編集用のHTML生成
+        let editCategoryHTML = '';
+        if (hasCategories) {
+            const catInputs = eventCategories.map(c => `<input type="text" class="edit-cat-input w-full md:w-2/3 border border-stone-300 rounded-sm p-2 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(c)}">`).join('');
+            editCategoryHTML = `
+                <div class="bg-white p-4 border border-stone-200 rounded-sm">
+                    <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
+                        <input type="checkbox" id="editUseCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer" checked> 名簿にカテゴリーを追加する
+                    </label>
+                    <div id="editCategorySetupArea" class="mt-4 space-y-3 pl-6 border-l-2 border-stone-200">
+                        <div id="editCategoryInputsContainer" class="space-y-2">
+                            ${catInputs}
+                        </div>
+                        <button type="button" id="editAddCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-1">${svgPlus} 入力欄を追加</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            editCategoryHTML = `
+                <div class="bg-white p-4 border border-stone-200 rounded-sm">
+                    <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
+                        <input type="checkbox" id="editUseCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリーを追加する
+                    </label>
+                    <div id="editCategorySetupArea" class="hidden mt-4 space-y-3 pl-6 border-l-2 border-stone-200">
+                        <div id="editCategoryInputsContainer" class="space-y-2">
+                            <input type="text" class="edit-cat-input w-full md:w-2/3 border border-stone-300 rounded-sm p-2 focus:outline-none focus:border-[#7B2C3A] bg-stone-50" placeholder="カテゴリー名">
+                            <input type="text" class="edit-cat-input w-full md:w-2/3 border border-stone-300 rounded-sm p-2 focus:outline-none focus:border-[#7B2C3A] bg-stone-50" placeholder="カテゴリー名">
+                        </div>
+                        <button type="button" id="editAddCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-1">${svgPlus} 入力欄を追加</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 新規登録フォーム用のカテゴリー選択HTML
+        let regCategoryHTML = '';
+        if (hasCategories) {
+            const catOptions = eventCategories.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
+            regCategoryHTML = `
+                <div class="mt-4 pt-4 border-t border-stone-200">
+                    <label class="block text-xs font-bold text-stone-500 mb-2">カテゴリーを選択</label>
+                    <select id="regCategory" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white rounded-sm">
+                        ${catOptions}
+                    </select>
+                </div>
+            `;
+        }
+
+        // フィルター用のカテゴリーチェックボックスHTML
+        let filterCategoryHTML = '';
+        if (hasCategories) {
+            const catFilters = eventCategories.map(c => `
+                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="cat-filter accent-[#7B2C3A]" value="${escapeHTML(c)}" checked> ${escapeHTML(c)}</label>
+            `).join('');
+            filterCategoryHTML = `
+                <div class="flex items-center flex-wrap gap-4 mt-2">
+                    <span class="text-xs text-stone-400 font-normal">枠:</span>
+                    ${catFilters}
+                    <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="cat-filter accent-[#7B2C3A]" value="未設定" checked> 未設定(旧データ)</label>
+                </div>
+            `;
+        }
+
 
         appDiv.innerHTML = `
             <div id="eventDisplayArea" class="mb-10 relative">
-                <!-- 右上のアクションボタン群 -->
                 <div class="absolute top-0 right-0 flex items-center gap-2">
                     <button id="copyBtn" class="bg-stone-200 px-3 py-1 text-[10px] font-bold hover:bg-stone-300 transition text-stone-700 w-[84px] text-center rounded-sm border border-stone-300 whitespace-nowrap">URLをコピー</button>
                     <button id="editEventBtn" class="text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
                 </div>
                 
-                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] pr-36">${escapeHTML(eventData.name)}</h1>
+                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] pr-36 break-all">${escapeHTML(eventData.name)}</h1>
                 
-                <div class="space-y-3 mb-6 text-sm text-stone-700 leading-relaxed px-2">
+                <div class="space-y-3 mb-6 text-sm text-stone-700 leading-relaxed px-1">
                     <div class="flex flex-col md:flex-row md:items-center">
                         <span class="font-bold w-20 text-stone-500 shrink-0">日程</span>
                         <span>${escapeHTML(dateStr)} ${escapeHTML(timeStr)}</span>
                     </div>
                     <div class="flex flex-col md:flex-row md:items-start">
                         <span class="font-bold w-20 text-stone-500 shrink-0">場所</span>
-                        <span>${escapeHTML(eventData.location || '未定')}</span>
+                        <span>${locationHTML}</span>
                     </div>
                     ${eventData.address ? `
                     <div class="flex flex-col md:flex-row md:items-start">
                         <span class="font-bold w-20 text-stone-500 shrink-0">住所</span>
-                        <span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(eventData.address)}" target="_blank" class="text-blue-600 underline hover:text-blue-800 transition">${escapeHTML(eventData.address)}</a></span>
+                        <span>${addressHTML}</span>
                     </div>
                     ` : ''}
                     ${eventData.fee ? `
@@ -326,11 +444,11 @@ async function renderRsvpPage(id) {
                 </div>
 
                 ${eventData.description ? 
-                    `<div class="bg-[#F4F1EA] p-6 text-sm text-stone-700 leading-loose whitespace-pre-wrap rounded-sm border border-stone-200">${escapeHTML(eventData.description)}</div>` : ''}
+                    `<div class="bg-[#F4F1EA] p-5 text-sm text-stone-700 leading-loose whitespace-pre-wrap rounded-sm border border-stone-200">${escapeHTML(eventData.description)}</div>` : ''}
             </div>
 
             <!-- 編集フォーム -->
-            <form id="eventEditArea" autocomplete="off" onsubmit="return false;" class="mb-10 hidden bg-[#F4F1EA] p-6 border border-stone-200 rounded-sm">
+            <form id="eventEditArea" autocomplete="off" onsubmit="return false;" class="mb-10 hidden bg-[#F4F1EA] p-4 md:p-6 border border-stone-200 rounded-sm">
                 <h2 class="text-lg font-bold mb-4 text-[#7B2C3A] flex items-center">${svgEdit} イベント情報の編集</h2>
                 <div class="space-y-4 text-sm">
                     <div>
@@ -358,16 +476,19 @@ async function renderRsvpPage(id) {
                             <span class="text-stone-700 font-bold">円</span>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 gap-2 p-4 bg-white border border-stone-200">
+                    <div class="grid grid-cols-1 gap-2 p-3 md:p-4 bg-white border border-stone-200">
                         <div>
                             <label class="text-xs font-bold text-stone-500">表示する場所の名前</label>
                             <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.location || '')}">
                         </div>
                         <div class="mt-2">
-                            <label class="text-xs font-bold text-stone-500">住所 <span class="text-xs font-normal text-stone-500">（自動でマップのリンクになります）</span></label>
+                            <label class="text-xs font-bold text-stone-500">住所</label>
                             <input type="text" id="editAddress" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.address || '')}">
                         </div>
                     </div>
+                    
+                    ${editCategoryHTML}
+
                     <div>
                         <label class="text-xs font-bold text-stone-500">詳細・備考</label>
                         <textarea id="editDesc" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 h-24 focus:outline-none focus:border-[#7B2C3A] bg-white">${escapeHTML(eventData.description || '')}</textarea>
@@ -379,11 +500,11 @@ async function renderRsvpPage(id) {
                 </div>
             </form>
 
-            <div class="mb-4 text-center">
+            <div class="mb-6 text-center">
                 <button id="toggleRegBtn" class="bg-[#7B2C3A] text-white text-sm font-bold px-8 py-3 rounded-sm shadow-md hover:bg-[#5A1F29] transition tracking-widest">＋ 新規名簿登録</button>
             </div>
             
-            <form id="registrationForm" autocomplete="off" onsubmit="return false;" class="mb-12 bg-[#F4F1EA] p-6 border border-stone-200 rounded-sm hidden transition-all duration-300">
+            <form id="registrationForm" autocomplete="off" onsubmit="return false;" class="mb-12 bg-[#F4F1EA] p-5 md:p-6 border border-stone-200 rounded-sm hidden transition-all duration-300">
                 <div class="space-y-4 text-sm max-w-xl mx-auto">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -400,15 +521,17 @@ async function renderRsvpPage(id) {
                         <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regGender" value="その他" class="accent-[#7B2C3A]"> その他</label>
                     </div>
 
-                    <div class="bg-white p-3 border border-stone-200 flex justify-center gap-6">
-                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="-" checked class="accent-[#7B2C3A]"> ${svgDash}</label>
-                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="〇" class="accent-[#7B2C3A]"> ${svgMaru}</label>
-                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="△" class="accent-[#7B2C3A]"> ${svgSankaku}</label>
-                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="×" class="accent-[#7B2C3A]"> ${svgBatsu}</label>
+                    ${regCategoryHTML}
+
+                    <div class="bg-white p-3 border border-stone-200 flex justify-center gap-4 md:gap-6 text-xs md:text-sm">
+                        <label class="flex items-center gap-1 md:gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="-" checked class="accent-[#7B2C3A]"> ${svgDash}</label>
+                        <label class="flex items-center gap-1 md:gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="〇" class="accent-[#7B2C3A]"> ${svgMaru}</label>
+                        <label class="flex items-center gap-1 md:gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="△" class="accent-[#7B2C3A]"> ${svgSankaku}</label>
+                        <label class="flex items-center gap-1 md:gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="×" class="accent-[#7B2C3A]"> ${svgBatsu}</label>
                     </div>
                     
                     <div>
-                        <input type="text" id="regGuestComment" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="備考">
+                        <input type="text" id="regGuestComment" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="コメント・備考">
                     </div>
                     <button id="submitBtn" type="button" class="w-full bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition shadow-sm">リストに追加する</button>
                 </div>
@@ -416,18 +539,22 @@ async function renderRsvpPage(id) {
 
             <div class="mb-4 border-b-2 border-stone-300 pb-2">
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <h2 class="text-lg font-bold text-stone-800 tracking-wider">名簿</h2>
-                    <div id="summaryArea" class="text-sm font-bold text-stone-600 flex flex-wrap gap-4"></div>
+                    <h2 class="text-lg font-bold text-stone-800 tracking-wider pl-1">名簿</h2>
+                    <div id="summaryArea" class="text-sm font-bold text-stone-600 flex flex-wrap gap-4 pl-1"></div>
                 </div>
                 
                 <div class="mt-4 pt-3 border-t border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex items-center gap-4 text-sm text-stone-600 font-bold">
-                        <span class="text-xs text-stone-400 font-normal">表示:</span>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterMale" checked class="accent-[#7B2C3A]"> 男</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterFemale" checked class="accent-[#7B2C3A]"> 女</label>
-                        <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterOther" checked class="accent-[#7B2C3A]"> その他</label>
+                    <div class="flex flex-col gap-1 pl-1">
+                        <div class="flex items-center gap-4 text-sm text-stone-600 font-bold">
+                            <span class="text-xs text-stone-400 font-normal">表示:</span>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterMale" checked class="accent-[#7B2C3A]"> 男</label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterFemale" checked class="accent-[#7B2C3A]"> 女</label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterOther" checked class="accent-[#7B2C3A]"> その他</label>
+                        </div>
+                        ${filterCategoryHTML}
                     </div>
-                    <div class="w-full md:w-64 relative">
+                    
+                    <div class="w-full md:w-64 relative mt-2 md:mt-0">
                         <input type="text" id="searchName" name="${rName()}" class="w-full border border-stone-300 rounded-sm p-2 text-sm focus:outline-none focus:border-[#7B2C3A] bg-white transition pr-8" placeholder="名前で検索">
                         <div class="absolute inset-y-0 right-0 flex items-center px-2 text-stone-400">
                             ${svgSearch}
@@ -436,16 +563,11 @@ async function renderRsvpPage(id) {
                 </div>
             </div>
             
-            <p id="editNotice" class="text-xs text-stone-500 mb-3">自分の行の「出欠」や「コメント」はいつでもクリックして編集できます。</p>
+            <!-- 1行スマホレイアウト対応のための説明 -->
+            <p id="editNotice" class="text-[10px] md:text-xs text-stone-400 mb-2 pl-1">※自分の行の「出欠」や「コメント」はいつでもクリックして編集できます。<br class="md:hidden">枠からはみ出るコメントは横にスクロールして読めます。</p>
             
-            <div class="hidden md:grid grid-cols-12 gap-3 mb-1 px-4 py-2 bg-[#F4F1EA] border border-stone-300 text-xs font-bold text-stone-700">
-                <div class="col-span-4">お名前</div>
-                <div class="col-span-3 text-center">出欠</div>
-                <div class="col-span-5">コメント</div>
-            </div>
-            
-            <form id="rsvpListForm" autocomplete="off" onsubmit="return false;">
-                <div id="rsvpList" class="border-t md:border-t-0 border-stone-200"></div>
+            <form id="rsvpListForm" autocomplete="off" onsubmit="return false;" class="overflow-hidden">
+                <div id="rsvpList" class="border-t border-stone-200"></div>
             </form>
             
             <div class="mt-16 pt-8 border-t border-stone-200 flex flex-col items-center gap-4">
@@ -478,6 +600,25 @@ async function renderRsvpPage(id) {
             }
         });
 
+        // 編集モードでのカテゴリー追加機能
+        const editUseCategoriesToggle = document.getElementById('editUseCategoriesToggle');
+        if (editUseCategoriesToggle) {
+            editUseCategoriesToggle.addEventListener('change', (e) => {
+                const area = document.getElementById('editCategorySetupArea');
+                if (e.target.checked) area.classList.remove('hidden');
+                else area.classList.add('hidden');
+            });
+            document.getElementById('editAddCategoryInputBtn').addEventListener('click', () => {
+                const container = document.getElementById('editCategoryInputsContainer');
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = "edit-cat-input w-full md:w-2/3 border border-stone-300 rounded-sm p-2 focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition";
+                input.placeholder = "追加のカテゴリー名";
+                container.appendChild(input);
+                input.focus();
+            });
+        }
+
         const editStart = document.getElementById('editStartTime');
         const editEnd = document.getElementById('editEndTime');
         editStart.addEventListener('change', () => {
@@ -490,7 +631,7 @@ async function renderRsvpPage(id) {
             if (inputPin !== eventData.pin) return await showModal('alert', 'エラー', 'パスワードが違います。');
             
             isAdmin = true;
-            document.getElementById('editNotice').textContent = "【管理者モード】名前や性別も直接クリックして編集できます。";
+            document.getElementById('editNotice').textContent = "【管理者モード】名前や性別、カテゴリー枠も直接クリックして編集できます。";
             renderListDOM();
             
             document.getElementById('eventDisplayArea').classList.add('hidden');
@@ -509,6 +650,17 @@ async function renderRsvpPage(id) {
             const feeValue = document.getElementById('editFee').value.replace(/[^0-9]/g, '');
             const formattedFee = feeValue ? `${Number(feeValue).toLocaleString()}円` : '';
 
+            // カテゴリーの取得処理
+            let newCategories = [];
+            const toggle = document.getElementById('editUseCategoriesToggle');
+            if (toggle && toggle.checked) {
+                const inputs = document.querySelectorAll('.edit-cat-input');
+                inputs.forEach(inp => {
+                    const val = inp.value.trim();
+                    if (val && !newCategories.includes(val)) newCategories.push(val);
+                });
+            }
+
             document.getElementById('saveEditBtn').textContent = "保存中...";
             try {
                 await updateDoc(doc(db, "events", id), {
@@ -519,7 +671,8 @@ async function renderRsvpPage(id) {
                     fee: formattedFee,
                     location: document.getElementById('editLocation').value,
                     address: document.getElementById('editAddress').value,
-                    description: document.getElementById('editDesc').value
+                    description: document.getElementById('editDesc').value,
+                    categories: newCategories // ★更新
                 });
                 window.location.reload();
             } catch(e) {
@@ -559,6 +712,10 @@ async function renderRsvpPage(id) {
             const status = document.querySelector('input[name="regStatus"]:checked').value;
             const gender = document.querySelector('input[name="regGender"]:checked')?.value || 'その他';
             const comment = document.getElementById('regGuestComment').value;
+            
+            // カテゴリーが有効な場合、選択されたものを取得
+            const catEl = document.getElementById('regCategory');
+            const category = catEl ? catEl.value : '';
 
             if (!lastName && !firstName) return await showModal('alert', 'エラー', '姓名のどちらかは入力してください。');
 
@@ -569,6 +726,7 @@ async function renderRsvpPage(id) {
                 lastName: lastName,
                 firstName: firstName,
                 gender: gender,
+                category: category,
                 status: status,
                 comment: comment,
                 createdAt: serverTimestamp()
@@ -579,6 +737,7 @@ async function renderRsvpPage(id) {
             document.getElementById('regGuestComment').value = '';
             document.querySelector('input[name="regStatus"][value="-"]').checked = true;
             document.querySelector('input[name="regGender"][value="男"]').checked = true;
+            if (catEl) catEl.selectedIndex = 0;
             
             document.getElementById('submitBtn').textContent = "リストに追加する";
             document.getElementById('submitBtn').disabled = false;
@@ -601,11 +760,14 @@ async function renderRsvpPage(id) {
                 await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { firstName: e.target.value });
             } else if (e.target.classList.contains('gender-dropdown')) {
                 await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { gender: e.target.value });
+            } else if (e.target.classList.contains('cat-dropdown')) {
+                await updateDoc(doc(db, "events", id, "rsvps", rsvpId), { category: e.target.value });
             }
         });
 
         const filters = ['filterMale', 'filterFemale', 'filterOther'];
         filters.forEach(f => document.getElementById(f).addEventListener('change', renderListDOM));
+        // カテゴリーフィルターのイベント登録は描画関数の中で実施
         document.getElementById('searchName').addEventListener('input', renderListDOM);
 
         onSnapshot(collection(db, "events", id, "rsvps"), (snapshot) => {
@@ -623,8 +785,14 @@ async function renderRsvpPage(id) {
             const showMale = document.getElementById('filterMale').checked;
             const showFemale = document.getElementById('filterFemale').checked;
             const showOther = document.getElementById('filterOther').checked;
+            
+            // 動的に生成されたカテゴリーチェックボックスの状態を取得
+            const catFilters = Array.from(document.querySelectorAll('.cat-filter'));
+            const activeCats = catFilters.filter(cb => cb.checked).map(cb => cb.value);
+
             const searchNameStr = document.getElementById('searchName').value.trim().toLowerCase();
 
+            // ソート
             const genderOrder = { '男': 1, '女': 2, 'その他': 3 };
             rsvpDataList.sort((a, b) => {
                 const gA = genderOrder[a.gender || 'その他'] || 3;
@@ -637,11 +805,23 @@ async function renderRsvpPage(id) {
             let visibleTotal = 0;
 
             rsvpDataList.forEach((data) => {
+                // 性別フィルター
                 const gender = data.gender || 'その他';
                 if (gender === '男' && !showMale) return;
                 if (gender === '女' && !showFemale) return;
                 if (gender === 'その他' && !showOther) return;
 
+                // カテゴリーフィルター
+                if (hasCategories) {
+                    let effectiveCat = data.category || '未設定';
+                    // もし現在のイベント設定にないカテゴリーを持っていたら未設定扱いにする
+                    if (effectiveCat !== '未設定' && !eventCategories.includes(effectiveCat)) {
+                        effectiveCat = '未設定';
+                    }
+                    if (catFilters.length > 0 && !activeCats.includes(effectiveCat)) return;
+                }
+
+                // 名前検索フィルター
                 const fullNameForSearch = `${data.lastName || ''} ${data.firstName || ''}`.trim().toLowerCase();
                 if (searchNameStr && !fullNameForSearch.includes(searchNameStr)) return;
 
@@ -655,35 +835,61 @@ async function renderRsvpPage(id) {
 
                 if(counts[currentStatus] !== undefined) counts[currentStatus]++;
 
+                // ★ 1行スマホ対応: flex-nowrap と各アイテムの flex-shrink 設定
                 const row = document.createElement('div');
-                row.className = "grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-3 items-center w-full px-4 py-3 border-b border-stone-200 bg-transparent hover:bg-[#F4F1EA] transition text-sm";
+                row.className = "flex items-center w-full px-1 py-3 border-b border-stone-200 bg-transparent hover:bg-[#F4F1EA] transition text-sm flex-nowrap";
                 
                 let nameHtml = '';
+                let catBadge = '';
+                if (hasCategories && data.category && eventCategories.includes(data.category)) {
+                    catBadge = `<span class="text-[9px] bg-stone-100 text-stone-500 px-1 py-0.5 rounded-sm ml-1 truncate max-w-[60px] inline-block align-middle">${escapeHTML(data.category)}</span>`;
+                }
+
                 if (isAdmin) {
-                    nameHtml = `
-                        <div class="md:col-span-4 flex items-center pr-2 w-full">
-                            <input type="text" name="${rName()}" class="last-name-input w-16 md:w-20 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition px-1" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
-                            <span class="text-stone-300 mx-0.5"> </span>
-                            <input type="text" name="${rName()}" class="first-name-input w-16 md:w-20 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition px-1" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
-                            <select name="${rName()}" class="gender-dropdown ml-auto md:ml-2 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-[10px] text-stone-500 font-normal cursor-pointer transition px-1" data-id="${data.id}">
-                                <option value="男" ${gender === '男' ? 'selected' : ''}>男</option>
-                                <option value="女" ${gender === '女' ? 'selected' : ''}>女</option>
-                                <option value="その他" ${gender === 'その他' ? 'selected' : ''}>その他</option>
+                    let catSelectAdmin = '';
+                    if (hasCategories) {
+                        const adminCatOpts = eventCategories.map(c => `<option value="${escapeHTML(c)}" ${data.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('');
+                        catSelectAdmin = `
+                            <select name="${rName()}" class="cat-dropdown flex-1 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-[10px] text-stone-500 font-normal cursor-pointer transition px-1" data-id="${data.id}">
+                                <option value="" ${!data.category ? 'selected' : ''}>未設定</option>
+                                ${adminCatOpts}
                             </select>
+                        `;
+                    }
+                    // 管理者モードの氏名エリア（縦積みにして幅を節約）
+                    nameHtml = `
+                        <div class="flex-[0_0_120px] md:flex-[0_0_220px] flex flex-col justify-center pr-1 min-w-0">
+                            <div class="flex items-center gap-1 w-full min-w-0">
+                                <input type="text" name="${rName()}" class="last-name-input w-1/2 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition px-1" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
+                                <input type="text" name="${rName()}" class="first-name-input w-1/2 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition px-1" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
+                            </div>
+                            <div class="flex items-center gap-1 mt-0.5 w-full min-w-0">
+                                <select name="${rName()}" class="gender-dropdown flex-1 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-[10px] text-stone-500 font-normal cursor-pointer transition px-1" data-id="${data.id}">
+                                    <option value="男" ${gender === '男' ? 'selected' : ''}>男</option>
+                                    <option value="女" ${gender === '女' ? 'selected' : ''}>女</option>
+                                    <option value="その他" ${gender === 'その他' ? 'selected' : ''}>他</option>
+                                </select>
+                                ${catSelectAdmin}
+                            </div>
                         </div>
                     `;
                 } else {
                     const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
-                    const genderDisp = `<span class="text-[10px] text-stone-400 font-normal shrink-0 ml-2">(${escapeHTML(gender)})</span>`;
-                    nameHtml = `<div class="md:col-span-4 font-bold text-stone-800 truncate text-base">${fullName}${genderDisp}</div>`;
+                    const genderDisp = `<span class="text-[10px] text-stone-400 font-normal ml-1">(${escapeHTML(gender)})</span>`;
+                    nameHtml = `
+                        <div class="flex-[0_0_120px] md:flex-[0_0_220px] flex flex-col justify-center pr-1 min-w-0 overflow-hidden">
+                            <div class="font-bold text-stone-800 truncate text-sm md:text-base">${fullName}</div>
+                            <div class="flex items-center text-[10px] truncate mt-0.5">${genderDisp} ${catBadge}</div>
+                        </div>
+                    `;
                 }
 
                 row.innerHTML = `
                     ${nameHtml}
                     
-                    <div class="md:col-span-3 flex md:justify-center">
-                        <div class="relative w-20">
-                            <select name="${rName()}" class="status-dropdown appearance-none w-full border-b border-transparent bg-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none py-1 pl-2 pr-6 text-sm font-bold text-stone-800 cursor-pointer text-center transition" data-id="${data.id}">
+                    <div class="flex-[0_0_68px] md:flex-[0_0_80px] flex justify-center px-1">
+                        <div class="relative w-full">
+                            <select name="${rName()}" class="status-dropdown appearance-none w-full border-b border-transparent bg-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none py-1 pl-1 pr-4 md:pr-6 text-sm font-bold text-stone-800 cursor-pointer text-center transition" data-id="${data.id}">
                                 <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
                                 <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
                                 <option value="△" ${currentStatus === '△' ? 'selected' : ''}>△</option>
@@ -693,8 +899,9 @@ async function renderRsvpPage(id) {
                         </div>
                     </div>
                     
-                    <div class="md:col-span-5 relative">
-                        <input type="text" name="${rName()}" class="comment-input w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-xs md:text-sm py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="クリックしてコメントを編集">
+                    <div class="flex-1 min-w-0 relative pl-1 md:pl-2">
+                        <!-- overflow-x-auto を input 親に持たせることで入力内容がスクロール可能に -->
+                        <input type="text" name="${rName()}" class="comment-input w-full min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-xs md:text-sm py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="クリックしてコメント追加">
                     </div>
                 `;
                 list.appendChild(row);
@@ -706,6 +913,12 @@ async function renderRsvpPage(id) {
                 <span class="text-rose-600">× 欠席 ${counts['×']}人</span>
                 <span class="text-stone-400 font-normal ml-2">（表示中 ${visibleTotal}人）</span>
             `;
+            
+            // 新しく描画されたカテゴリーチェックボックスのイベントを再登録
+            document.querySelectorAll('.cat-filter').forEach(cb => {
+                cb.removeEventListener('change', renderListDOM); // 重複防止
+                cb.addEventListener('change', renderListDOM);
+            });
         }
 
     } catch (e) {
