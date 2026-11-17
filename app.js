@@ -115,7 +115,6 @@ const svgEdit = `<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="curr
 const svgSearch = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>`;
 const svgPlus = `<svg class="w-3 h-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>`;
 const svgTrash = `<svg class="w-5 h-5 text-stone-400 hover:text-red-500 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
-// ドラッグ用ハンドルアイコン
 const svgDrag = `<svg class="w-5 h-5 text-stone-400 cursor-grab touch-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>`;
 
 const svgMaru = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-emerald-600" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="8"></circle></svg>`;
@@ -147,7 +146,6 @@ function formatDateDisplay(dateStr) {
 // ------------------------------------------
 function createCategoryInputRow(value = '') {
     const row = document.createElement('div');
-    // 幅がコンテナをはみ出さないように w-full min-w-0 を指定
     row.className = "flex items-center gap-1 md:gap-2 category-row bg-white p-1 rounded-sm border border-transparent hover:border-stone-200 transition w-full min-w-0";
     row.innerHTML = `
         <span class="drag-handle p-1 shrink-0">${svgDrag}</span>
@@ -230,7 +228,6 @@ function renderCreateEventPage() {
                 <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
                     <input type="checkbox" id="useCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリー（グループ枠）を追加する
                 </label>
-                <!-- w-fullを追加、余白を調整 -->
                 <div id="categorySetupArea" class="hidden mt-4 space-y-3 pl-1 md:pl-6 border-l-2 border-stone-200 w-full overflow-hidden">
                     <div id="categoryInputsContainer" class="space-y-1 w-full md:w-2/3 min-w-0">
                         <!-- ここにJSで枠を追加 -->
@@ -262,7 +259,6 @@ function renderCreateEventPage() {
         endSel.innerHTML = generateTimeOptions(endSel.value, startSel.value);
     });
 
-    // カテゴリーの初期設定とSortable適用
     const catContainer = document.getElementById('categoryInputsContainer');
     catContainer.appendChild(createCategoryInputRow());
     catContainer.appendChild(createCategoryInputRow());
@@ -390,14 +386,17 @@ async function renderRsvpPage(id) {
         const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
 
         appDiv.innerHTML = `
-            <div id="eventDisplayArea" class="mb-10 relative pt-10 md:pt-6">
-                <!-- 右上のアクションボタン群 (タイトルエリアの幅を確保) -->
-                <div class="absolute top-0 right-0 flex items-center gap-2 z-10 bg-[#FCFBF7] pl-2">
-                    <button id="copyBtn" class="bg-stone-200 px-2 py-1 text-[10px] font-bold hover:bg-stone-300 transition text-stone-700 rounded-sm border border-stone-300 whitespace-nowrap shadow-sm">URLをコピー</button>
-                    <button id="editEventBtn" class="text-[10px] text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
+            <div id="eventDisplayArea" class="mb-10 relative">
+                <!-- アクションボタン群を右上に独立配置 -->
+                <div class="flex justify-end mb-2">
+                    <div class="flex items-center gap-2">
+                        <button id="copyBtn" class="bg-stone-200 px-2 py-1 text-[10px] font-bold hover:bg-stone-300 transition text-stone-700 rounded-sm border border-stone-300 whitespace-nowrap shadow-sm">URLをコピー</button>
+                        <button id="editEventBtn" class="text-[10px] text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
+                    </div>
                 </div>
                 
-                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] break-words leading-tight w-full pr-32 md:pr-40">${escapeHTML(eventData.name)}</h1>
+                <!-- タイトルは全幅を使用して表示 -->
+                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] break-words leading-tight w-full">${escapeHTML(eventData.name)}</h1>
                 
                 <div class="space-y-3 mb-6 text-sm text-stone-700 leading-relaxed px-1">
                     <div class="flex flex-col md:flex-row md:items-center">
@@ -514,7 +513,7 @@ async function renderRsvpPage(id) {
                     <div class="mt-4 pt-4 border-t border-stone-200">
                         <label class="block text-xs font-bold text-stone-500 mb-2">カテゴリーを選択</label>
                         <select id="regCategory" class="w-full border border-stone-300 p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white rounded-sm">
-                            ${eventCategories.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('')}
+                            ${eventCategories.map((c, i) => `<option value="${escapeHTML(c)}" ${i === 0 ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('')}
                         </select>
                     </div>
                     ` : ''}
@@ -553,7 +552,6 @@ async function renderRsvpPage(id) {
                             ${eventCategories.map(c => `
                                 <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="cat-filter accent-[#7B2C3A]" value="${escapeHTML(c)}" checked> ${escapeHTML(c)}</label>
                             `).join('')}
-                            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="cat-filter accent-[#7B2C3A]" value="未設定" checked> 未設定</label>
                         </div>
                         ` : ''}
                     </div>
@@ -806,6 +804,7 @@ async function renderRsvpPage(id) {
                 let catIndexA = eventCategories.indexOf(a.category);
                 let catIndexB = eventCategories.indexOf(b.category);
                 
+                // カテゴリーが設定されていない場合は最後に配置
                 if (catIndexA === -1) catIndexA = 999;
                 if (catIndexB === -1) catIndexB = 999;
                 
@@ -823,9 +822,9 @@ async function renderRsvpPage(id) {
                 if (gender === 'その他' && !showOther) return;
 
                 if (hasCategories) {
-                    let effectiveCat = data.category || '未設定';
-                    if (effectiveCat !== '未設定' && !eventCategories.includes(effectiveCat)) {
-                        effectiveCat = '未設定';
+                    let effectiveCat = data.category || '';
+                    if (effectiveCat !== '' && !eventCategories.includes(effectiveCat)) {
+                        effectiveCat = '';
                     }
                     if (activeCats.length > 0 && !activeCats.includes(effectiveCat)) return;
                 }
@@ -858,7 +857,6 @@ async function renderRsvpPage(id) {
                         const adminCatOpts = eventCategories.map(c => `<option value="${escapeHTML(c)}" ${data.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('');
                         catSelectAdmin = `
                             <select name="${rName()}" class="cat-dropdown flex-1 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-[10px] text-stone-500 font-normal cursor-pointer transition px-1" data-id="${data.id}">
-                                <option value="" ${!data.category || !eventCategories.includes(data.category) ? 'selected' : ''}>未設定</option>
                                 ${adminCatOpts}
                             </select>
                         `;
@@ -905,8 +903,8 @@ async function renderRsvpPage(id) {
                         </div>
                     </div>
                     
-                    <div class="flex-1 min-w-0 pl-1 md:pl-2 overflow-x-auto hide-scrollbar">
-                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[200px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-sm py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
+                    <div class="flex-1 min-w-0 pl-1 md:pl-2 overflow-x-auto hide-scrollbar shrink-0">
+                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[200px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-xs md:text-sm py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
                     </div>
                 `;
                 list.appendChild(row);
