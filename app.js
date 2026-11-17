@@ -30,52 +30,31 @@ if (!document.querySelector("meta[name=viewport]")) {
     document.getElementsByTagName('head')[0].appendChild(meta);
 }
 
-// スクロールバーやテーブルのCSS設定
+// 横スクロールバーを非表示にするためのCSSを注入
 const style = document.createElement('style');
 style.innerHTML = `
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
-    .rsvp-table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 600px; /* スマホでスクロールさせるための最小幅 */
-    }
-    .rsvp-table th, .rsvp-table td {
-        border: 1px solid #E5E7EB; /* stone-200 */
-        padding: 0.75rem 0.5rem;
-        vertical-align: middle;
-    }
-    .rsvp-table th {
-        background-color: #F4F1EA;
-        color: #57534E; /* stone-500 */
-        font-weight: bold;
-        font-size: 0.75rem;
-        text-align: left;
-    }
-    /* カテゴリの変わり目に太い線を引く */
-    .rsvp-table tr.category-start td {
-        border-top: 2px solid #D6D3D1; /* stone-300 */
-    }
 `;
 document.head.appendChild(style);
 
-document.body.className = "bg-[#EFECE6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white relative overflow-x-hidden text-base";
+document.body.className = "bg-[#EFECE6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white relative overflow-x-hidden text-sm md:text-base";
 const appDiv = document.getElementById('app');
-appDiv.className = "bg-[#FCFBF7] p-4 md:p-10 shadow-xl border border-stone-200 border-t-[6px] border-t-[#7B2C3A] rounded-sm w-full max-w-5xl mx-auto mt-4 md:mt-8 mb-20";
+// 余白を削減（p-4 -> p-3, p-10 -> p-6 など）しスマートに
+appDiv.className = "bg-[#FCFBF7] p-3 md:p-6 shadow-xl border border-stone-200 border-t-[6px] border-t-[#7B2C3A] rounded-sm w-full max-w-4xl mx-auto mt-2 md:mt-6 mb-10";
 
 // ==========================================
 // 共通のカスタムモーダル機能
 // ==========================================
 const modalHTML = `
     <div id="customModal" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-900 bg-opacity-60 hidden backdrop-blur-sm transition-opacity px-4">
-        <div class="bg-white rounded-sm shadow-2xl p-6 w-full max-w-sm">
-            <h3 id="modalTitle" class="font-bold text-lg mb-3 text-[#7B2C3A] border-b border-stone-200 pb-2"></h3>
-            <p id="modalMessage" class="text-sm text-stone-700 mb-5 leading-relaxed"></p>
-            <input type="text" id="modalInput" class="hidden w-full border border-stone-300 p-3 rounded-sm mb-5 focus:border-[#7B2C3A] focus:outline-none text-center tracking-widest text-xl bg-stone-50" inputmode="numeric" pattern="[0-9]*" maxlength="4">
-            <div class="flex justify-end gap-3">
-                <button id="modalCancelBtn" class="px-5 py-2.5 bg-stone-200 text-stone-700 rounded-sm text-sm font-bold hover:bg-stone-300 transition">キャンセル</button>
-                <button id="modalOkBtn" class="px-5 py-2.5 bg-[#7B2C3A] text-white rounded-sm text-sm font-bold hover:bg-[#5A1F29] transition shadow-md">OK</button>
+        <div class="bg-white rounded-sm shadow-2xl p-5 w-full max-w-sm">
+            <h3 id="modalTitle" class="font-bold text-base md:text-lg mb-3 text-[#7B2C3A] border-b border-stone-200 pb-2"></h3>
+            <p id="modalMessage" class="text-sm text-stone-700 mb-4 leading-relaxed"></p>
+            <input type="text" id="modalInput" class="hidden w-full border border-stone-300 p-2 rounded-sm mb-4 focus:border-[#7B2C3A] focus:outline-none text-center tracking-widest text-lg bg-stone-50" inputmode="numeric" pattern="[0-9]*" maxlength="4">
+            <div class="flex justify-end gap-2">
+                <button id="modalCancelBtn" class="px-4 py-2 bg-stone-200 text-stone-700 rounded-sm text-xs md:text-sm font-bold hover:bg-stone-300 transition">キャンセル</button>
+                <button id="modalOkBtn" class="px-4 py-2 bg-[#7B2C3A] text-white rounded-sm text-xs md:text-sm font-bold hover:bg-[#5A1F29] transition shadow-md">OK</button>
             </div>
         </div>
     </div>
@@ -133,11 +112,11 @@ function showModal(type, title, message) {
 // 各種SVGアイコン
 // ==========================================
 const svgChevron = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
-const svgEdit = `<svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
+const svgEdit = `<svg class="w-3 h-3 md:w-4 md:h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>`;
 const svgSearch = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>`;
 const svgPlus = `<svg class="w-3 h-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>`;
-const svgTrash = `<svg class="w-5 h-5 text-stone-400 hover:text-red-500 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
-const svgDrag = `<svg class="w-5 h-5 text-stone-400 cursor-grab touch-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>`;
+const svgTrash = `<svg class="w-4 h-4 md:w-5 md:h-5 text-stone-400 hover:text-red-500 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
+const svgDrag = `<svg class="w-4 h-4 md:w-5 md:h-5 text-stone-400 cursor-grab touch-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>`;
 
 const svgMaru = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-emerald-600" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="8"></circle></svg>`;
 const svgSankaku = `<svg viewBox="0 0 24 24" class="w-4 h-4 inline-block text-amber-500" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 4L3 19h18L12 4z" stroke-linejoin="round"></path></svg>`;
@@ -168,7 +147,7 @@ function createCategoryInputRow(value = '') {
     row.className = "flex items-center gap-1 md:gap-2 category-row bg-white p-1 rounded-sm border border-transparent hover:border-stone-200 transition w-full min-w-0";
     row.innerHTML = `
         <span class="drag-handle p-1 shrink-0">${svgDrag}</span>
-        <input type="text" class="cat-input flex-1 min-w-0 border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" value="${escapeHTML(value)}" placeholder="">
+        <input type="text" class="cat-input flex-1 min-w-0 border border-stone-300 rounded-sm p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" value="${escapeHTML(value)}" placeholder="">
         <span class="cat-del ml-1 p-1 shrink-0">${svgTrash}</span>
     `;
     
@@ -192,82 +171,82 @@ function renderCreateEventPage() {
     const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
     
     appDiv.innerHTML = `
-        <h1 class="text-2xl font-bold mb-8 text-center text-[#7B2C3A] tracking-wider">新規イベント作成</h1>
-        <form autocomplete="off" onsubmit="return false;" class="space-y-6 text-sm px-1">
+        <h1 class="text-xl md:text-2xl font-bold mb-6 text-center text-[#7B2C3A] tracking-wider">新規イベント作成</h1>
+        <form autocomplete="off" onsubmit="return false;" class="space-y-4 text-sm px-1">
             <div>
-                <label class="block font-bold mb-2 text-stone-700">イベント名 <span class="text-[#7B2C3A]">*</span></label>
-                <input type="text" id="eventName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition">
+                <label class="block font-bold mb-1 text-stone-700">イベント名 <span class="text-[#7B2C3A]">*</span></label>
+                <input type="text" id="eventName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition">
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                    <label class="block font-bold mb-2 text-stone-700">日にち</label>
-                    <input type="date" id="eventDate" name="${rName()}" class="appearance-none min-w-0 w-full border border-stone-300 rounded-sm p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition">
+                    <label class="block font-bold mb-1 text-stone-700">日にち</label>
+                    <input type="date" id="eventDate" name="${rName()}" class="appearance-none min-w-0 w-full border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
                 <div>
-                    <label class="block font-bold mb-2 text-stone-700">開始時間</label>
+                    <label class="block font-bold mb-1 text-stone-700">開始時間</label>
                     <div class="relative">
-                        <select id="eventStartTime" name="${rName()}" class="appearance-none w-full border border-stone-300 rounded-sm p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white pr-8 transition">
+                        <select id="eventStartTime" name="${rName()}" class="appearance-none w-full border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white pr-8 transition">
                             ${generateTimeOptions('')}
                         </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-stone-500">${svgChevron}</div>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-stone-500">${svgChevron}</div>
                     </div>
                 </div>
                 <div>
-                    <label class="block font-bold mb-2 text-stone-700">終了時間</label>
+                    <label class="block font-bold mb-1 text-stone-700">終了時間</label>
                     <div class="relative">
-                        <select id="eventEndTime" name="${rName()}" class="appearance-none w-full border border-stone-300 rounded-sm p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white pr-8 transition">
+                        <select id="eventEndTime" name="${rName()}" class="appearance-none w-full border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white pr-8 transition">
                             ${generateTimeOptions('')}
                         </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-stone-500">${svgChevron}</div>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-stone-500">${svgChevron}</div>
                     </div>
                 </div>
             </div>
 
             <div>
-                <label class="block font-bold mb-2 text-stone-700">参加費</label>
+                <label class="block font-bold mb-1 text-stone-700">参加費</label>
                 <div class="flex items-center gap-2">
-                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/2 md:w-1/4 border border-stone-300 rounded-sm p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition text-right">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/2 md:w-1/4 border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition text-right">
                     <span class="text-stone-700 font-bold">円</span>
                 </div>
             </div>
 
-            <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
-                <div class="mb-4">
-                    <label class="block font-bold mb-2 text-stone-700">表示する場所の名前 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
-                    <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition">
+            <div class="bg-[#F4F1EA] p-3 border border-stone-200 rounded-sm space-y-3">
+                <div>
+                    <label class="block font-bold mb-1 text-stone-700">表示する場所の名前 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
+                    <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
                 <div>
-                    <label class="block font-bold mb-2 text-stone-700">住所 <span class="text-xs font-normal text-stone-500">（自動でマップのリンクになります）</span></label>
-                    <input type="text" id="eventAddress" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition">
+                    <label class="block font-bold mb-1 text-stone-700">住所 <span class="text-xs font-normal text-stone-500">（自動でマップのリンクになります）</span></label>
+                    <input type="text" id="eventAddress" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
             </div>
 
-            <div class="bg-white p-4 border border-stone-200 rounded-sm">
+            <div class="bg-white p-3 border border-stone-200 rounded-sm">
                 <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
                     <input type="checkbox" id="useCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリー（グループ枠）を追加する
                 </label>
-                <div id="categorySetupArea" class="hidden mt-4 space-y-3 pl-1 md:pl-6 border-l-2 border-stone-200 w-full overflow-hidden">
+                <div id="categorySetupArea" class="hidden mt-3 space-y-2 pl-1 md:pl-4 border-l-2 border-stone-200 w-full overflow-hidden">
                     <div id="categoryInputsContainer" class="space-y-1 w-full md:w-2/3 min-w-0">
                         <!-- ここにJSで枠を追加 -->
                     </div>
-                    <button type="button" id="addCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-2 ml-7">${svgPlus} 枠を追加</button>
+                    <button type="button" id="addCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-1 ml-6 md:ml-8">${svgPlus} 枠を追加</button>
                 </div>
             </div>
 
             <div>
-                <label class="block font-bold mb-2 text-stone-700">詳細・備考</label>
-                <textarea id="eventDesc" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 h-32 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition"></textarea>
+                <label class="block font-bold mb-1 text-stone-700">詳細・備考</label>
+                <textarea id="eventDesc" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-2 h-24 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition"></textarea>
             </div>
             
-            <div class="border-t border-stone-200 pt-6 mt-6">
-                <label class="block font-bold mb-2 text-[#7B2C3A]">管理用パスワード（数字4桁） <span class="text-[#7B2C3A]">*</span></label>
+            <div class="border-t border-stone-200 pt-4 mt-4">
+                <label class="block font-bold mb-1 text-[#7B2C3A]">管理用パスワード（数字4桁） <span class="text-[#7B2C3A]">*</span></label>
                 <p class="text-xs text-stone-500 mb-2">※イベント内容の編集・削除時に必要になります。</p>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventPin" name="${rName()}" maxlength="4" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-1/2 md:w-1/3 border border-stone-300 rounded-sm p-3 text-base focus:outline-none focus:border-[#7B2C3A] tracking-widest bg-white transition text-center">
+                <input type="text" inputmode="numeric" pattern="[0-9]*" id="eventPin" name="${rName()}" maxlength="4" autocomplete="new-password" oninput="this.value = this.value.replace(/[^0-9]/g, '');" class="w-1/2 md:w-1/3 border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] tracking-widest bg-white transition text-center">
             </div>
 
-            <div class="pt-4 pb-10">
-                <button id="createBtn" type="button" class="w-full bg-[#7B2C3A] text-white font-bold py-4 rounded-sm hover:bg-[#5A1F29] transition shadow-md tracking-wider">イベントページを作成する</button>
+            <div class="pt-2 pb-6">
+                <button id="createBtn" type="button" class="w-full bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition shadow-md tracking-wider">イベントページを作成する</button>
             </div>
         </form>
     `;
@@ -405,16 +384,19 @@ async function renderRsvpPage(id) {
         const rName = () => `field_${Math.random().toString(36).substring(2, 8)}`;
 
         appDiv.innerHTML = `
-            <div id="eventDisplayArea" class="mb-10 relative pt-10 md:pt-6">
-                <!-- 右上のアクションボタン群 (タイトルエリアの幅を確保) -->
-                <div class="absolute top-0 right-0 flex items-center gap-2 z-10 bg-[#FCFBF7] pl-2">
-                    <button id="copyBtn" class="bg-stone-200 px-2 py-1 text-[10px] font-bold hover:bg-stone-300 transition text-stone-700 rounded-sm border border-stone-300 whitespace-nowrap shadow-sm">URLをコピー</button>
-                    <button id="editEventBtn" class="text-[10px] text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
+            <div id="eventDisplayArea" class="mb-6 relative">
+                <!-- ★ 右上にボタンを独立して配置 -->
+                <div class="flex justify-end mb-1">
+                    <div class="flex items-center gap-1.5">
+                        <button id="copyBtn" class="bg-stone-200 px-2 py-1 text-[10px] md:text-xs font-bold hover:bg-stone-300 transition text-stone-700 rounded-sm border border-stone-300 whitespace-nowrap shadow-sm">URLをコピー</button>
+                        <button id="editEventBtn" class="text-[10px] md:text-xs text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
+                    </div>
                 </div>
                 
-                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] break-words leading-tight w-full pr-32 md:pr-40">${escapeHTML(eventData.name)}</h1>
+                <!-- ★ タイトルはその下に全幅で配置（かぶらない） -->
+                <h1 class="text-xl md:text-2xl font-bold text-stone-800 mb-4 pb-2 border-b-2 border-[#7B2C3A] break-words w-full">${escapeHTML(eventData.name)}</h1>
                 
-                <div class="space-y-3 mb-6 text-sm text-stone-700 leading-relaxed px-1">
+                <div class="space-y-2 mb-4 text-sm text-stone-700 leading-relaxed px-1">
                     <div class="flex flex-col md:flex-row md:items-center">
                         <span class="font-bold w-20 text-stone-500 shrink-0">日程</span>
                         <span>${escapeHTML(dateStr)} ${escapeHTML(timeStr)}</span>
@@ -438,12 +420,12 @@ async function renderRsvpPage(id) {
                 </div>
 
                 ${eventData.description ? 
-                    `<div class="bg-[#F4F1EA] p-5 text-sm text-stone-700 leading-loose whitespace-pre-wrap rounded-sm border border-stone-200">${escapeHTML(eventData.description)}</div>` : ''}
+                    `<div class="bg-[#F4F1EA] p-4 text-sm text-stone-700 leading-loose whitespace-pre-wrap rounded-sm border border-stone-200">${escapeHTML(eventData.description)}</div>` : ''}
             </div>
 
             <!-- 編集フォーム -->
-            <form id="eventEditArea" autocomplete="off" onsubmit="return false;" class="mb-10 hidden bg-[#F4F1EA] p-4 md:p-6 border border-stone-200 rounded-sm w-full overflow-hidden">
-                <h2 class="text-lg font-bold mb-4 text-[#7B2C3A] flex items-center">${svgEdit} イベント情報の編集</h2>
+            <form id="eventEditArea" autocomplete="off" onsubmit="return false;" class="mb-8 hidden bg-[#F4F1EA] p-3 md:p-5 border border-stone-200 rounded-sm w-full overflow-hidden">
+                <h2 class="text-base md:text-lg font-bold mb-4 text-[#7B2C3A] flex items-center">${svgEdit} イベント情報の編集</h2>
                 <div class="space-y-4 text-sm w-full min-w-0">
                     <div class="w-full min-w-0">
                         <label class="text-xs font-bold text-stone-500">イベント名</label>
@@ -470,7 +452,7 @@ async function renderRsvpPage(id) {
                             <span class="text-stone-700 font-bold">円</span>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 gap-2 p-3 md:p-4 bg-white border border-stone-200 w-full min-w-0">
+                    <div class="grid grid-cols-1 gap-2 p-3 bg-white border border-stone-200 w-full min-w-0">
                         <div>
                             <label class="text-xs font-bold text-stone-500">表示する場所の名前</label>
                             <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.location || '')}">
@@ -481,15 +463,15 @@ async function renderRsvpPage(id) {
                         </div>
                     </div>
                     
-                    <div class="bg-white p-3 md:p-4 border border-stone-200 rounded-sm w-full min-w-0 overflow-hidden">
+                    <div class="bg-white p-3 border border-stone-200 rounded-sm w-full min-w-0 overflow-hidden">
                         <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
                             <input type="checkbox" id="editUseCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer" ${hasCategories ? 'checked' : ''}> 名簿にカテゴリー枠を追加する
                         </label>
-                        <div id="editCategorySetupArea" class="${hasCategories ? '' : 'hidden'} mt-4 space-y-3 pl-1 md:pl-6 border-l-2 border-stone-200 w-full">
+                        <div id="editCategorySetupArea" class="${hasCategories ? '' : 'hidden'} mt-3 space-y-2 pl-1 md:pl-4 border-l-2 border-stone-200 w-full">
                             <div id="editCategoryInputsContainer" class="space-y-1 w-full md:w-2/3 min-w-0">
                                 <!-- JSで描画 -->
                             </div>
-                            <button type="button" id="editAddCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-2 ml-7">${svgPlus} 枠を追加</button>
+                            <button type="button" id="editAddCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-1 ml-6 md:ml-8">${svgPlus} 枠を追加</button>
                         </div>
                     </div>
 
@@ -497,74 +479,74 @@ async function renderRsvpPage(id) {
                         <label class="text-xs font-bold text-stone-500">詳細・備考</label>
                         <textarea id="editDesc" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 h-24 text-base focus:outline-none focus:border-[#7B2C3A] bg-white">${escapeHTML(eventData.description || '')}</textarea>
                     </div>
-                    <div class="flex gap-3 pt-2 w-full min-w-0">
-                        <button id="saveEditBtn" type="button" class="flex-1 bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition">保存する</button>
-                        <button id="cancelEditBtn" type="button" class="bg-stone-300 px-6 py-3 rounded-sm font-bold text-stone-700 hover:bg-stone-400 transition">キャンセル</button>
+                    <div class="flex gap-2 pt-2 w-full min-w-0">
+                        <button id="saveEditBtn" type="button" class="flex-1 bg-[#7B2C3A] text-white font-bold py-2.5 rounded-sm hover:bg-[#5A1F29] transition">保存する</button>
+                        <button id="cancelEditBtn" type="button" class="bg-stone-300 px-4 py-2.5 rounded-sm font-bold text-stone-700 hover:bg-stone-400 transition">キャンセル</button>
                     </div>
                 </div>
             </form>
 
-            <div class="mb-6 text-center">
+            <div class="mb-5 text-center">
                 <button id="toggleRegBtn" class="bg-[#7B2C3A] text-white text-sm font-bold px-8 py-3 rounded-sm shadow-md hover:bg-[#5A1F29] transition tracking-widest">＋ 新規名簿登録</button>
             </div>
             
-            <form id="registrationForm" autocomplete="off" onsubmit="return false;" class="mb-12 bg-[#F4F1EA] p-5 md:p-6 border border-stone-200 rounded-sm hidden transition-all duration-300">
-                <div class="space-y-4 text-sm max-w-xl mx-auto">
-                    <div class="grid grid-cols-2 gap-4">
+            <form id="registrationForm" autocomplete="off" onsubmit="return false;" class="mb-8 bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm hidden transition-all duration-300">
+                <div class="space-y-3 text-sm max-w-xl mx-auto">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <input type="text" id="regLastName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="姓">
+                            <input type="text" id="regLastName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="姓">
                         </div>
                         <div>
-                            <input type="text" id="regFirstName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="名">
+                            <input type="text" id="regFirstName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="名">
                         </div>
                     </div>
                     
-                    <div class="bg-white p-3 border border-stone-200 flex justify-center gap-6">
-                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regGender" value="男" checked class="accent-[#7B2C3A]"> 男</label>
-                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regGender" value="女" class="accent-[#7B2C3A]"> 女</label>
-                        <label class="flex items-center gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regGender" value="その他" class="accent-[#7B2C3A]"> その他</label>
+                    <div class="bg-white p-2 border border-stone-200 flex justify-center gap-4">
+                        <label class="flex items-center gap-1 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regGender" value="男" checked class="accent-[#7B2C3A]"> 男</label>
+                        <label class="flex items-center gap-1 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regGender" value="女" class="accent-[#7B2C3A]"> 女</label>
+                        <label class="flex items-center gap-1 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regGender" value="その他" class="accent-[#7B2C3A]"> その他</label>
                     </div>
 
                     ${hasCategories ? `
-                    <div class="mt-4 pt-4 border-t border-stone-200">
-                        <label class="block text-xs font-bold text-stone-500 mb-2">カテゴリーを選択</label>
-                        <select id="regCategory" class="w-full border border-stone-300 p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white rounded-sm">
+                    <div class="mt-3 pt-3 border-t border-stone-200">
+                        <label class="block text-xs font-bold text-stone-500 mb-1">カテゴリーを選択</label>
+                        <select id="regCategory" class="w-full border border-stone-300 p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white rounded-sm">
                             ${eventCategories.map((c, i) => `<option value="${escapeHTML(c)}" ${i === 0 ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('')}
                         </select>
                     </div>
                     ` : ''}
 
-                    <div class="bg-white p-3 border border-stone-200 flex justify-center gap-4 md:gap-6 text-xs md:text-sm">
-                        <label class="flex items-center gap-1 md:gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="-" checked class="accent-[#7B2C3A]"> ${svgDash}</label>
-                        <label class="flex items-center gap-1 md:gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="〇" class="accent-[#7B2C3A]"> ${svgMaru}</label>
-                        <label class="flex items-center gap-1 md:gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="△" class="accent-[#7B2C3A]"> ${svgSankaku}</label>
-                        <label class="flex items-center gap-1 md:gap-2 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="×" class="accent-[#7B2C3A]"> ${svgBatsu}</label>
+                    <div class="bg-white p-2 border border-stone-200 flex justify-center gap-3 text-sm">
+                        <label class="flex items-center gap-1 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="-" checked class="accent-[#7B2C3A]"> ${svgDash}</label>
+                        <label class="flex items-center gap-1 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="〇" class="accent-[#7B2C3A]"> ${svgMaru}</label>
+                        <label class="flex items-center gap-1 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="△" class="accent-[#7B2C3A]"> ${svgSankaku}</label>
+                        <label class="flex items-center gap-1 cursor-pointer text-stone-700 font-bold"><input type="radio" name="regStatus" value="×" class="accent-[#7B2C3A]"> ${svgBatsu}</label>
                     </div>
                     
                     <div>
-                        <input type="text" id="regGuestComment" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="コメント・備考">
+                        <input type="text" id="regGuestComment" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" placeholder="コメント・備考">
                     </div>
-                    <button id="submitBtn" type="button" class="w-full bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition shadow-sm">リストに追加する</button>
+                    <button id="submitBtn" type="button" class="w-full bg-[#7B2C3A] text-white font-bold py-2.5 rounded-sm hover:bg-[#5A1F29] transition shadow-sm">リストに追加する</button>
                 </div>
             </form>
 
-            <div class="mb-4 border-b-2 border-stone-300 pb-2">
-                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                    <h2 class="text-lg font-bold text-stone-800 tracking-wider pl-1">名簿</h2>
-                    <div id="summaryArea" class="text-sm font-bold text-stone-600 flex flex-wrap gap-4 pl-1"></div>
+            <div class="mb-3 border-b-2 border-stone-300 pb-2">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
+                    <h2 class="text-base md:text-lg font-bold text-stone-800 tracking-wider pl-1">名簿</h2>
+                    <div id="summaryArea" class="text-xs md:text-sm font-bold text-stone-600 flex flex-wrap gap-3 pl-1"></div>
                 </div>
                 
-                <div class="mt-4 pt-3 border-t border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="mt-3 pt-2 border-t border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div class="flex flex-col gap-1 pl-1">
-                        <div class="flex items-center gap-4 text-sm text-stone-600 font-bold">
-                            <span class="text-xs text-stone-400 font-normal">表示:</span>
+                        <div class="flex items-center gap-3 text-xs md:text-sm text-stone-600 font-bold">
+                            <span class="text-[10px] md:text-xs text-stone-400 font-normal">表示:</span>
                             <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterMale" checked class="accent-[#7B2C3A]"> 男</label>
                             <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterFemale" checked class="accent-[#7B2C3A]"> 女</label>
                             <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="filterOther" checked class="accent-[#7B2C3A]"> その他</label>
                         </div>
                         ${hasCategories ? `
-                        <div class="flex items-center flex-wrap gap-4 mt-2 font-bold text-sm text-stone-600">
-                            <span class="text-xs text-stone-400 font-normal">枠:</span>
+                        <div class="flex items-center flex-wrap gap-3 mt-1 font-bold text-xs md:text-sm text-stone-600">
+                            <span class="text-[10px] md:text-xs text-stone-400 font-normal">枠:</span>
                             ${eventCategories.map(c => `
                                 <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" class="cat-filter accent-[#7B2C3A]" value="${escapeHTML(c)}" checked> ${escapeHTML(c)}</label>
                             `).join('')}
@@ -572,8 +554,8 @@ async function renderRsvpPage(id) {
                         ` : ''}
                     </div>
                     
-                    <div class="w-full md:w-64 relative mt-2 md:mt-0">
-                        <input type="text" id="searchName" name="${rName()}" class="w-full border border-stone-300 rounded-sm p-2 text-sm md:text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition pr-8" placeholder="名前で検索">
+                    <div class="w-full md:w-56 relative mt-1 md:mt-0">
+                        <input type="text" id="searchName" name="${rName()}" class="w-full border border-stone-300 rounded-sm p-1.5 md:p-2 text-sm focus:outline-none focus:border-[#7B2C3A] bg-white transition pr-8" placeholder="名前で検索">
                         <div class="absolute inset-y-0 right-0 flex items-center px-2 text-stone-400">
                             ${svgSearch}
                         </div>
@@ -581,25 +563,22 @@ async function renderRsvpPage(id) {
                 </div>
             </div>
             
-            <p id="editNotice" class="text-[10px] md:text-xs text-stone-400 mb-2 pl-1 leading-snug">※自分の行の「出欠」や「コメント」はいつでもクリックして編集できます。<br>横にスクロールしてご覧ください。</p>
+            <p id="editNotice" class="text-[10px] text-stone-400 mb-1 pl-1 leading-snug">※自分の行の「出欠」や「コメント」はクリックして編集できます。<br>枠からはみ出るコメントは横にスクロールして読めます。</p>
             
-            <form id="rsvpListForm" autocomplete="off" onsubmit="return false;" class="overflow-hidden bg-white rounded-sm shadow-sm border border-stone-200">
-                <div class="overflow-x-auto hide-scrollbar">
-                    <table class="rsvp-table">
-                        <thead>
-                            <tr>
-                                ${hasCategories ? `<th style="width:120px;">カテゴリ</th>` : ''}
-                                <th style="width:200px;">お名前</th>
-                                <th style="width:80px; text-align:center;">出欠</th>
-                                <th style="min-width:200px;">コメント</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rsvpListBody"></tbody>
-                    </table>
+            <!-- ★ リスト本体：Flexboxで1行に固定し、コメントのみスクロールさせる -->
+            <form id="rsvpListForm" autocomplete="off" onsubmit="return false;" class="bg-white rounded-sm shadow-sm border border-stone-200">
+                <!-- ヘッダー行 -->
+                <div class="flex items-center w-full px-1 py-1.5 bg-[#F4F1EA] border-b border-stone-300 text-[10px] md:text-xs font-bold text-stone-500">
+                    ${hasCategories ? `<div class="w-14 md:w-20 shrink-0 px-1">カテゴリ</div>` : ''}
+                    <div class="${hasCategories ? 'w-24 md:w-32' : 'w-32 md:w-48'} shrink-0 px-1">お名前</div>
+                    <div class="w-10 md:w-12 shrink-0 text-center px-1">出欠</div>
+                    <div class="flex-1 min-w-0 px-1">コメント</div>
                 </div>
+                <!-- データ行エリア -->
+                <div id="rsvpListBody" class="flex flex-col"></div>
             </form>
             
-            <div class="mt-16 pt-8 border-t border-stone-200 flex flex-col items-center gap-4">
+            <div class="mt-10 pt-6 border-t border-stone-200 flex flex-col items-center gap-4">
                 <a href="${window.location.pathname}" target="_blank" rel="noopener noreferrer" class="text-xs text-stone-500 hover:text-[#7B2C3A] font-bold transition">別のイベントを新しく作る</a>
                 <button id="deleteEventBtn" class="text-[10px] text-stone-400 hover:text-red-500 transition">このイベントを完全に削除する</button>
             </div>
@@ -750,7 +729,7 @@ async function renderRsvpPage(id) {
             const comment = document.getElementById('regGuestComment').value;
             
             const catEl = document.getElementById('regCategory');
-            // 未設定は廃止。カテゴリ機能使用時は必ずどれかが選ばれる（デフォルトは配列の0番目）
+            // 未設定は廃止。有効な場合は必ず最初のカテゴリがデフォルトになる
             const category = catEl ? catEl.value : '';
 
             if (!lastName && !firstName) return await showModal('alert', 'エラー', '姓名のどちらかは入力してください。');
@@ -814,7 +793,7 @@ async function renderRsvpPage(id) {
         });
 
         function renderListDOM() {
-            const tbody = document.getElementById('rsvpListBody');
+            const listBody = document.getElementById('rsvpListBody');
             const summaryArea = document.getElementById('summaryArea');
             
             const showMale = document.getElementById('filterMale').checked;
@@ -829,7 +808,7 @@ async function renderRsvpPage(id) {
 
             const searchNameStr = document.getElementById('searchName').value.trim().toLowerCase();
 
-            // カテゴリ順にソート。未設定は廃止。万が一空の場合は一番最後。
+            // カテゴリ順にソート。未設定は廃止したので考慮不要。万が一空の場合は一番最後。
             rsvpDataList.sort((a, b) => {
                 let catIndexA = eventCategories.indexOf(a.category);
                 let catIndexB = eventCategories.indexOf(b.category);
@@ -840,10 +819,15 @@ async function renderRsvpPage(id) {
                 return catIndexA - catIndexB;
             });
 
-            tbody.innerHTML = '';
+            listBody.innerHTML = '';
             let counts = { '-': 0, '〇': 0, '△': 0, '×': 0 };
             let visibleTotal = 0;
-            let currentCategoryRendered = null; // カテゴリ表示制御用
+            let currentCategoryRendered = null; 
+
+            // カラムの幅を変数で管理
+            const catWidth = "w-14 md:w-20";
+            const nameWidth = hasCategories ? "w-24 md:w-32 lg:w-40" : "w-32 md:w-48 lg:w-56";
+            const statusWidth = "w-10 md:w-12";
 
             rsvpDataList.forEach((data) => {
                 const gender = data.gender || 'その他';
@@ -853,11 +837,7 @@ async function renderRsvpPage(id) {
 
                 if (hasCategories) {
                     let effectiveCat = data.category || '';
-                    if (effectiveCat !== '' && !eventCategories.includes(effectiveCat)) {
-                        effectiveCat = '';
-                    }
-                    // 万が一未設定のデータが残っていてもフィルターで弾かれないように調整可能だが、
-                    // 新仕様では activeCats の中に存在するかチェック
+                    if (effectiveCat !== '' && !eventCategories.includes(effectiveCat)) effectiveCat = '';
                     if (effectiveCat && activeCats.length > 0 && !activeCats.includes(effectiveCat)) return;
                 }
 
@@ -874,46 +854,49 @@ async function renderRsvpPage(id) {
 
                 if(counts[currentStatus] !== undefined) counts[currentStatus]++;
 
-                const tr = document.createElement('tr');
-                // カテゴリの変わり目かどうかの判定
+                const row = document.createElement('div');
                 let isNewCategory = false;
                 if (hasCategories && data.category !== currentCategoryRendered) {
                     isNewCategory = true;
                     currentCategoryRendered = data.category;
-                    tr.className = "category-start"; // CSSで太い線を引く
                 }
 
-                // カテゴリ列のHTML（管理者編集モードかどうかで分岐）
+                // カテゴリの変わり目に太線を引く（最初の行は除く）
+                const borderClass = (hasCategories && isNewCategory && visibleTotal > 1) ? 'border-t-2 border-stone-300' : 'border-t border-stone-100';
+                
+                row.className = `flex items-center w-full px-1 py-1.5 bg-transparent hover:bg-stone-50 transition flex-nowrap ${borderClass}`;
+
+                // --- カテゴリ列 ---
                 let catCellHtml = '';
                 if (hasCategories) {
                     if (isAdmin) {
-                        // 編集モード：常にプルダウンを表示
                         const adminCatOpts = eventCategories.map(c => `<option value="${escapeHTML(c)}" ${data.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('');
                         catCellHtml = `
-                            <td>
-                                <select name="${rName()}" class="cat-dropdown w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-[11px] text-stone-600 font-bold cursor-pointer transition px-1" data-id="${data.id}">
+                            <div class="${catWidth} shrink-0 px-1 min-w-0">
+                                <select name="${rName()}" class="cat-dropdown w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[10px] md:text-xs text-stone-600 truncate cursor-pointer px-0.5" data-id="${data.id}">
                                     ${adminCatOpts}
                                 </select>
-                            </td>
+                            </div>
                         `;
                     } else {
-                        // 通常モード：グループの先頭のみ文字を表示
                         catCellHtml = `
-                            <td class="text-xs text-stone-500 font-bold max-w-[120px] truncate break-words whitespace-normal leading-tight px-2">
+                            <div class="${catWidth} shrink-0 px-1 text-[11px] md:text-xs text-stone-500 font-bold truncate">
                                 ${isNewCategory ? escapeHTML(data.category) : ''}
-                            </td>
+                            </div>
                         `;
                     }
                 }
 
-                // 名前と性別のHTML
+                // --- 名前列 ---
                 let nameHtml = '';
                 if (isAdmin) {
                     nameHtml = `
-                        <div class="flex items-center gap-1 w-full min-w-0">
-                            <input type="text" name="${rName()}" class="last-name-input w-1/3 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition px-1 text-sm" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
-                            <input type="text" name="${rName()}" class="first-name-input w-1/3 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-800 font-bold truncate transition px-1 text-sm" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
-                            <select name="${rName()}" class="gender-dropdown w-1/3 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-[10px] text-stone-400 font-normal cursor-pointer transition px-1 ml-auto" data-id="${data.id}">
+                        <div class="${nameWidth} shrink-0 px-1 min-w-0 flex flex-col justify-center gap-1">
+                            <div class="flex items-center gap-0.5 w-full min-w-0">
+                                <input type="text" name="${rName()}" class="last-name-input w-1/2 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
+                                <input type="text" name="${rName()}" class="first-name-input w-1/2 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
+                            </div>
+                            <select name="${rName()}" class="gender-dropdown w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[9px] md:text-xs text-stone-400 cursor-pointer px-0.5" data-id="${data.id}">
                                 <option value="男" ${gender === '男' ? 'selected' : ''}>(男)</option>
                                 <option value="女" ${gender === '女' ? 'selected' : ''}>(女)</option>
                                 <option value="その他" ${gender === 'その他' ? 'selected' : ''}>(他)</option>
@@ -922,34 +905,35 @@ async function renderRsvpPage(id) {
                     `;
                 } else {
                     const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
-                    const genderDisp = `<span class="text-[10px] text-stone-400 font-normal shrink-0">(${escapeHTML(gender)})</span>`;
                     nameHtml = `
-                        <div class="flex items-center justify-between gap-1 w-full">
-                            <span class="font-bold text-stone-800 truncate text-sm">${fullName}</span>
-                            ${genderDisp}
+                        <div class="${nameWidth} shrink-0 px-1 min-w-0 flex flex-col justify-center overflow-hidden">
+                            <div class="font-bold text-stone-800 truncate text-[13px] md:text-sm leading-tight">${fullName}</div>
+                            <div class="text-[9px] md:text-[10px] text-stone-400 mt-0.5">(${escapeHTML(gender)})</div>
                         </div>
                     `;
                 }
 
-                // tr全体の構築
-                tr.innerHTML = `
-                    ${catCellHtml}
-                    <td>${nameHtml}</td>
-                    <td class="text-center px-1">
-                        <div class="relative w-full inline-block">
-                            <select name="${rName()}" class="status-dropdown appearance-none w-full bg-transparent hover:bg-stone-100 focus:outline-none text-base font-bold text-stone-800 cursor-pointer text-center transition" data-id="${data.id}">
-                                <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
-                                <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
-                                <option value="△" ${currentStatus === '△' ? 'selected' : ''}>△</option>
-                                <option value="×" ${currentStatus === '×' ? 'selected' : ''}>×</option>
-                            </select>
-                        </div>
-                    </td>
-                    <td>
-                        <input type="text" name="${rName()}" class="comment-input w-full min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-sm py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="クリックしてコメント追加">
-                    </td>
+                // --- 出欠列 ---
+                const statusHtml = `
+                    <div class="${statusWidth} shrink-0 px-1 flex justify-center items-center">
+                        <select name="${rName()}" class="status-dropdown appearance-none w-full bg-transparent hover:bg-stone-100 focus:outline-none text-[13px] md:text-sm font-bold text-stone-800 cursor-pointer text-center rounded-sm py-1" data-id="${data.id}">
+                            <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
+                            <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
+                            <option value="△" ${currentStatus === '△' ? 'selected' : ''}>△</option>
+                            <option value="×" ${currentStatus === '×' ? 'selected' : ''}>×</option>
+                        </select>
+                    </div>
                 `;
-                tbody.appendChild(tr);
+                
+                // --- コメント列 (横スクロール対応) ---
+                const commentHtml = `
+                    <div class="flex-1 min-w-0 px-1 overflow-x-auto hide-scrollbar flex items-center">
+                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[140px] md:min-w-[200px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-[11px] md:text-sm py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
+                    </div>
+                `;
+
+                row.innerHTML = catCellHtml + nameHtml + statusHtml + commentHtml;
+                listBody.appendChild(row);
             });
 
             summaryArea.innerHTML = `
