@@ -40,7 +40,6 @@ document.head.appendChild(style);
 
 document.body.className = "bg-[#EFECE6] min-h-screen text-[#333333] font-sans antialiased selection:bg-[#7B2C3A] selection:text-white relative overflow-x-hidden text-sm md:text-base";
 const appDiv = document.getElementById('app');
-// 余白を削減（p-4 -> p-3, p-10 -> p-6 など）しスマートに
 appDiv.className = "bg-[#FCFBF7] p-3 md:p-6 shadow-xl border border-stone-200 border-t-[6px] border-t-[#7B2C3A] rounded-sm w-full max-w-4xl mx-auto mt-2 md:mt-6 mb-10";
 
 // ==========================================
@@ -145,9 +144,10 @@ function formatDateDisplay(dateStr) {
 function createCategoryInputRow(value = '') {
     const row = document.createElement('div');
     row.className = "flex items-center gap-1 md:gap-2 category-row bg-white p-1 rounded-sm border border-transparent hover:border-stone-200 transition w-full min-w-0";
+    // ★ 変更追従のために data-original-value を仕込む
     row.innerHTML = `
         <span class="drag-handle p-1 shrink-0">${svgDrag}</span>
-        <input type="text" class="cat-input flex-1 min-w-0 border border-stone-300 rounded-sm p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" value="${escapeHTML(value)}" placeholder="">
+        <input type="text" data-original-value="${escapeHTML(value)}" class="cat-input flex-1 min-w-0 border border-stone-300 rounded-sm p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" value="${escapeHTML(value)}" placeholder="">
         <span class="cat-del ml-1 p-1 shrink-0">${svgTrash}</span>
     `;
     
@@ -385,7 +385,6 @@ async function renderRsvpPage(id) {
 
         appDiv.innerHTML = `
             <div id="eventDisplayArea" class="mb-6 relative">
-                <!-- ★ 右上にボタンを独立して配置 -->
                 <div class="flex justify-end mb-1">
                     <div class="flex items-center gap-1.5">
                         <button id="copyBtn" class="bg-stone-200 px-2 py-1 text-[10px] md:text-xs font-bold hover:bg-stone-300 transition text-stone-700 rounded-sm border border-stone-300 whitespace-nowrap shadow-sm">URLをコピー</button>
@@ -393,7 +392,6 @@ async function renderRsvpPage(id) {
                     </div>
                 </div>
                 
-                <!-- ★ タイトルはその下に全幅で配置（かぶらない） -->
                 <h1 class="text-xl md:text-2xl font-bold text-stone-800 mb-4 pb-2 border-b-2 border-[#7B2C3A] break-words w-full">${escapeHTML(eventData.name)}</h1>
                 
                 <div class="space-y-2 mb-4 text-sm text-stone-700 leading-relaxed px-1">
@@ -565,17 +563,8 @@ async function renderRsvpPage(id) {
             
             <p id="editNotice" class="text-[10px] text-stone-400 mb-1 pl-1 leading-snug">※自分の行の「出欠」や「コメント」はクリックして編集できます。<br>枠からはみ出るコメントは横にスクロールして読めます。</p>
             
-            <!-- ★ リスト本体：Flexboxで1行に固定し、コメントのみスクロールさせる -->
             <form id="rsvpListForm" autocomplete="off" onsubmit="return false;" class="bg-white rounded-sm shadow-sm border border-stone-200">
-                <!-- ヘッダー行 -->
-                <div class="flex items-center w-full px-1 py-1.5 bg-[#F4F1EA] border-b border-stone-300 text-[10px] md:text-xs font-bold text-stone-500">
-                    ${hasCategories ? `<div class="w-14 md:w-20 shrink-0 px-1">カテゴリ</div>` : ''}
-                    <div class="${hasCategories ? 'w-24 md:w-32' : 'w-32 md:w-48'} shrink-0 px-1">お名前</div>
-                    <div class="w-10 md:w-12 shrink-0 text-center px-1">出欠</div>
-                    <div class="flex-1 min-w-0 px-1">コメント</div>
-                </div>
-                <!-- データ行エリア -->
-                <div id="rsvpListBody" class="flex flex-col"></div>
+                <div id="rsvpListContainer"></div>
             </form>
             
             <div class="mt-10 pt-6 border-t border-stone-200 flex flex-col items-center gap-4">
@@ -667,12 +656,21 @@ async function renderRsvpPage(id) {
             const formattedFee = feeValue ? `${Number(feeValue).toLocaleString()}円` : '';
 
             let newCategories = [];
+            let categoryUpdates = []; // ★ カテゴリ名変更の一括追従用配列
+
             const toggle = document.getElementById('editUseCategoriesToggle');
             if (toggle && toggle.checked) {
                 const inputs = document.querySelectorAll('#editCategoryInputsContainer .cat-input');
                 inputs.forEach(inp => {
                     const val = inp.value.trim();
-                    if (val && !newCategories.includes(val)) newCategories.push(val);
+                    const originalVal = inp.getAttribute('data-original-value');
+                    if (val && !newCategories.includes(val)) {
+                        newCategories.push(val);
+                        // もしカテゴリ名が変更されていたら更新リストに追加
+                        if (originalVal && originalVal !== val) {
+                            categoryUpdates.push({ old: originalVal, new: val });
+                        }
+                    }
                 });
             }
 
@@ -689,6 +687,21 @@ async function renderRsvpPage(id) {
                     description: document.getElementById('editDesc').value,
                     categories: newCategories
                 });
+
+                // ★ カテゴリ名が変更された場合、所属している人全員のデータを一括アップデートする
+                if (categoryUpdates.length > 0) {
+                    const rsvpSnaps = await getDocs(collection(db, "events", id, "rsvps"));
+                    const updatePromises = [];
+                    rsvpSnaps.forEach((d) => {
+                        const rsvpData = d.data();
+                        const updateMatch = categoryUpdates.find(u => u.old === rsvpData.category);
+                        if (updateMatch) {
+                            updatePromises.push(updateDoc(doc(db, "events", id, "rsvps", d.id), { category: updateMatch.new }));
+                        }
+                    });
+                    await Promise.all(updatePromises);
+                }
+
                 window.location.assign(window.location.href);
             } catch(e) {
                 await showModal('alert', 'エラー', 'エラーが発生しました');
@@ -729,7 +742,6 @@ async function renderRsvpPage(id) {
             const comment = document.getElementById('regGuestComment').value;
             
             const catEl = document.getElementById('regCategory');
-            // 未設定は廃止。有効な場合は必ず最初のカテゴリがデフォルトになる
             const category = catEl ? catEl.value : '';
 
             if (!lastName && !firstName) return await showModal('alert', 'エラー', '姓名のどちらかは入力してください。');
@@ -793,7 +805,7 @@ async function renderRsvpPage(id) {
         });
 
         function renderListDOM() {
-            const listBody = document.getElementById('rsvpListBody');
+            const listContainer = document.getElementById('rsvpListContainer');
             const summaryArea = document.getElementById('summaryArea');
             
             const showMale = document.getElementById('filterMale').checked;
@@ -808,26 +820,36 @@ async function renderRsvpPage(id) {
 
             const searchNameStr = document.getElementById('searchName').value.trim().toLowerCase();
 
-            // カテゴリ順にソート。未設定は廃止したので考慮不要。万が一空の場合は一番最後。
+            // ★ 新しく保存されたカテゴリ配列の順序通りにソート
             rsvpDataList.sort((a, b) => {
                 let catIndexA = eventCategories.indexOf(a.category);
                 let catIndexB = eventCategories.indexOf(b.category);
-                
                 if (catIndexA === -1) catIndexA = 999;
                 if (catIndexB === -1) catIndexB = 999;
-                
                 return catIndexA - catIndexB;
             });
 
-            listBody.innerHTML = '';
             let counts = { '-': 0, '〇': 0, '△': 0, '×': 0 };
             let visibleTotal = 0;
             let currentCategoryRendered = null; 
 
-            // カラムの幅を変数で管理
-            const catWidth = "w-14 md:w-20";
-            const nameWidth = hasCategories ? "w-24 md:w-32 lg:w-40" : "w-32 md:w-48 lg:w-56";
-            const statusWidth = "w-10 md:w-12";
+            // ★ 列幅の共通変数定義（ここでヘッダーとデータ行のズレを完全解消）
+            const catWidth = "w-[64px] md:w-[80px] shrink-0 px-1";
+            const nameWidth = hasCategories ? "w-[120px] md:w-[160px] shrink-0 px-1" : "w-[150px] md:w-[220px] shrink-0 px-1";
+            const statusWidth = "w-[44px] md:w-[56px] shrink-0 px-1 text-center flex justify-center items-center";
+            const commentWidth = "flex-1 min-w-0 px-1";
+
+            const headerHtml = `
+                <div class="flex items-center w-full py-1.5 bg-[#F4F1EA] border-b border-stone-300 text-[10px] md:text-xs font-bold text-stone-500">
+                    ${hasCategories ? `<div class="${catWidth}">カテゴリ</div>` : ''}
+                    <div class="${nameWidth}">お名前</div>
+                    <div class="${statusWidth}">出欠</div>
+                    <div class="${commentWidth}">コメント</div>
+                </div>
+            `;
+            
+            const bodyDiv = document.createElement('div');
+            bodyDiv.className = "flex flex-col";
 
             rsvpDataList.forEach((data) => {
                 const gender = data.gender || 'その他';
@@ -861,10 +883,8 @@ async function renderRsvpPage(id) {
                     currentCategoryRendered = data.category;
                 }
 
-                // カテゴリの変わり目に太線を引く（最初の行は除く）
                 const borderClass = (hasCategories && isNewCategory && visibleTotal > 1) ? 'border-t-2 border-stone-300' : 'border-t border-stone-100';
-                
-                row.className = `flex items-center w-full px-1 py-1.5 bg-transparent hover:bg-stone-50 transition flex-nowrap ${borderClass}`;
+                row.className = `flex items-center w-full py-1.5 bg-transparent hover:bg-stone-50 transition flex-nowrap ${borderClass}`;
 
                 // --- カテゴリ列 ---
                 let catCellHtml = '';
@@ -872,7 +892,7 @@ async function renderRsvpPage(id) {
                     if (isAdmin) {
                         const adminCatOpts = eventCategories.map(c => `<option value="${escapeHTML(c)}" ${data.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('');
                         catCellHtml = `
-                            <div class="${catWidth} shrink-0 px-1 min-w-0">
+                            <div class="${catWidth} min-w-0">
                                 <select name="${rName()}" class="cat-dropdown w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[10px] md:text-xs text-stone-600 truncate cursor-pointer px-0.5" data-id="${data.id}">
                                     ${adminCatOpts}
                                 </select>
@@ -880,23 +900,21 @@ async function renderRsvpPage(id) {
                         `;
                     } else {
                         catCellHtml = `
-                            <div class="${catWidth} shrink-0 px-1 text-[11px] md:text-xs text-stone-500 font-bold truncate">
+                            <div class="${catWidth} text-[10px] md:text-xs text-stone-500 font-bold truncate">
                                 ${isNewCategory ? escapeHTML(data.category) : ''}
                             </div>
                         `;
                     }
                 }
 
-                // --- 名前列 ---
+                // --- 名前と性別列（右端に配置） ---
                 let nameHtml = '';
                 if (isAdmin) {
                     nameHtml = `
-                        <div class="${nameWidth} shrink-0 px-1 min-w-0 flex flex-col justify-center gap-1">
-                            <div class="flex items-center gap-0.5 w-full min-w-0">
-                                <input type="text" name="${rName()}" class="last-name-input w-1/2 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
-                                <input type="text" name="${rName()}" class="first-name-input w-1/2 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
-                            </div>
-                            <select name="${rName()}" class="gender-dropdown w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[9px] md:text-xs text-stone-400 cursor-pointer px-0.5" data-id="${data.id}">
+                        <div class="${nameWidth} min-w-0 flex items-center gap-0.5 md:gap-1">
+                            <input type="text" name="${rName()}" class="last-name-input w-2/5 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
+                            <input type="text" name="${rName()}" class="first-name-input w-2/5 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
+                            <select name="${rName()}" class="gender-dropdown w-1/5 min-w-[32px] md:min-w-[40px] shrink-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[9px] md:text-xs text-stone-400 cursor-pointer px-0.5" data-id="${data.id}">
                                 <option value="男" ${gender === '男' ? 'selected' : ''}>(男)</option>
                                 <option value="女" ${gender === '女' ? 'selected' : ''}>(女)</option>
                                 <option value="その他" ${gender === 'その他' ? 'selected' : ''}>(他)</option>
@@ -906,16 +924,16 @@ async function renderRsvpPage(id) {
                 } else {
                     const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
                     nameHtml = `
-                        <div class="${nameWidth} shrink-0 px-1 min-w-0 flex flex-col justify-center overflow-hidden">
-                            <div class="font-bold text-stone-800 truncate text-[13px] md:text-sm leading-tight">${fullName}</div>
-                            <div class="text-[9px] md:text-[10px] text-stone-400 mt-0.5">(${escapeHTML(gender)})</div>
+                        <div class="${nameWidth} min-w-0 flex justify-between items-center gap-1">
+                            <div class="font-bold text-stone-800 truncate text-xs md:text-sm leading-tight">${fullName}</div>
+                            <div class="text-[9px] md:text-[10px] text-stone-400 shrink-0 ml-auto">(${escapeHTML(gender)})</div>
                         </div>
                     `;
                 }
 
                 // --- 出欠列 ---
                 const statusHtml = `
-                    <div class="${statusWidth} shrink-0 px-1 flex justify-center items-center">
+                    <div class="${statusWidth}">
                         <select name="${rName()}" class="status-dropdown appearance-none w-full bg-transparent hover:bg-stone-100 focus:outline-none text-[13px] md:text-sm font-bold text-stone-800 cursor-pointer text-center rounded-sm py-1" data-id="${data.id}">
                             <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
                             <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
@@ -925,16 +943,19 @@ async function renderRsvpPage(id) {
                     </div>
                 `;
                 
-                // --- コメント列 (横スクロール対応) ---
+                // --- コメント列 ---
                 const commentHtml = `
-                    <div class="flex-1 min-w-0 px-1 overflow-x-auto hide-scrollbar flex items-center">
-                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[140px] md:min-w-[200px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-[11px] md:text-sm py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
+                    <div class="${commentWidth} overflow-x-auto hide-scrollbar flex items-center">
+                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[140px] md:min-w-[200px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-[11px] md:text-sm py-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
                     </div>
                 `;
 
                 row.innerHTML = catCellHtml + nameHtml + statusHtml + commentHtml;
-                listBody.appendChild(row);
+                bodyDiv.appendChild(row);
             });
+            
+            listContainer.innerHTML = headerHtml;
+            listContainer.appendChild(bodyDiv);
 
             summaryArea.innerHTML = `
                 <span class="text-emerald-600">〇 参加 ${counts['〇']}人</span> 
