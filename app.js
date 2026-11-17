@@ -147,11 +147,12 @@ function formatDateDisplay(dateStr) {
 // ------------------------------------------
 function createCategoryInputRow(value = '') {
     const row = document.createElement('div');
-    row.className = "flex items-center gap-2 category-row bg-white p-1 rounded-sm border border-transparent hover:border-stone-200 transition";
+    // 幅がコンテナをはみ出さないように w-full min-w-0 を指定
+    row.className = "flex items-center gap-1 md:gap-2 category-row bg-white p-1 rounded-sm border border-transparent hover:border-stone-200 transition w-full min-w-0";
     row.innerHTML = `
-        <span class="drag-handle p-1">${svgDrag}</span>
-        <input type="text" class="cat-input flex-1 border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" value="${escapeHTML(value)}" placeholder="">
-        <span class="cat-del ml-1 p-1">${svgTrash}</span>
+        <span class="drag-handle p-1 shrink-0">${svgDrag}</span>
+        <input type="text" class="cat-input flex-1 min-w-0 border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" value="${escapeHTML(value)}" placeholder="">
+        <span class="cat-del ml-1 p-1 shrink-0">${svgTrash}</span>
     `;
     
     row.querySelector('.cat-del').addEventListener('click', () => {
@@ -216,7 +217,7 @@ function renderCreateEventPage() {
 
             <div class="bg-[#F4F1EA] p-4 border border-stone-200 rounded-sm">
                 <div class="mb-4">
-                    <label class="block font-bold mb-2 text-stone-700">場所 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
+                    <label class="block font-bold mb-2 text-stone-700">表示する場所の名前 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
                     <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-3 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
                 <div>
@@ -227,10 +228,11 @@ function renderCreateEventPage() {
 
             <div class="bg-white p-4 border border-stone-200 rounded-sm">
                 <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
-                    <input type="checkbox" id="useCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリーを追加する
+                    <input type="checkbox" id="useCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリー（グループ枠）を追加する
                 </label>
-                <div id="categorySetupArea" class="hidden mt-4 space-y-3 pl-2 md:pl-6 border-l-2 border-stone-200">
-                    <div id="categoryInputsContainer" class="space-y-1 w-full md:w-2/3">
+                <!-- w-fullを追加、余白を調整 -->
+                <div id="categorySetupArea" class="hidden mt-4 space-y-3 pl-1 md:pl-6 border-l-2 border-stone-200 w-full overflow-hidden">
+                    <div id="categoryInputsContainer" class="space-y-1 w-full md:w-2/3 min-w-0">
                         <!-- ここにJSで枠を追加 -->
                     </div>
                     <button type="button" id="addCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-2 ml-7">${svgPlus} 枠を追加</button>
@@ -319,7 +321,6 @@ function renderCreateEventPage() {
                 pin: pin,
                 createdAt: serverTimestamp()
             });
-            // 保存完了後、確実に画面を切り替える
             window.location.assign(window.location.pathname + '?id=' + docRef.id);
         } catch (e) {
             await showModal('alert', 'エラー', '通信エラーが発生しました。設定を確認してください。');
@@ -390,13 +391,13 @@ async function renderRsvpPage(id) {
 
         appDiv.innerHTML = `
             <div id="eventDisplayArea" class="mb-10 relative pt-10 md:pt-6">
-                <!-- 右上のアクションボタン群 (絶対配置でタイトルと分離) -->
-                <div class="absolute top-0 right-0 flex items-center gap-2 z-10">
+                <!-- 右上のアクションボタン群 (タイトルエリアの幅を確保) -->
+                <div class="absolute top-0 right-0 flex items-center gap-2 z-10 bg-[#FCFBF7] pl-2">
                     <button id="copyBtn" class="bg-stone-200 px-2 py-1 text-[10px] font-bold hover:bg-stone-300 transition text-stone-700 rounded-sm border border-stone-300 whitespace-nowrap shadow-sm">URLをコピー</button>
                     <button id="editEventBtn" class="text-[10px] text-stone-500 hover:text-[#7B2C3A] flex items-center transition bg-transparent px-1 py-1 whitespace-nowrap">${svgEdit} 編集</button>
                 </div>
                 
-                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] break-words leading-tight w-full">${escapeHTML(eventData.name)}</h1>
+                <h1 class="text-2xl md:text-3xl font-bold text-stone-800 mb-8 pb-4 border-b-2 border-[#7B2C3A] break-words leading-tight w-full pr-32 md:pr-40">${escapeHTML(eventData.name)}</h1>
                 
                 <div class="space-y-3 mb-6 text-sm text-stone-700 leading-relaxed px-1">
                     <div class="flex flex-col md:flex-row md:items-center">
@@ -426,14 +427,14 @@ async function renderRsvpPage(id) {
             </div>
 
             <!-- 編集フォーム -->
-            <form id="eventEditArea" autocomplete="off" onsubmit="return false;" class="mb-10 hidden bg-[#F4F1EA] p-4 md:p-6 border border-stone-200 rounded-sm">
+            <form id="eventEditArea" autocomplete="off" onsubmit="return false;" class="mb-10 hidden bg-[#F4F1EA] p-4 md:p-6 border border-stone-200 rounded-sm w-full overflow-hidden">
                 <h2 class="text-lg font-bold mb-4 text-[#7B2C3A] flex items-center">${svgEdit} イベント情報の編集</h2>
-                <div class="space-y-4 text-sm">
-                    <div>
+                <div class="space-y-4 text-sm w-full min-w-0">
+                    <div class="w-full min-w-0">
                         <label class="text-xs font-bold text-stone-500">イベント名</label>
                         <input type="text" id="editName" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.name)}">
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 w-full min-w-0">
                         <div>
                             <label class="text-xs font-bold text-stone-500">日にち</label>
                             <input type="date" id="editDate" name="${rName()}" class="appearance-none min-w-0 w-full border border-stone-300 p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" value="${eventData.date || ''}">
@@ -447,16 +448,16 @@ async function renderRsvpPage(id) {
                             <select id="editEndTime" name="${rName()}" class="w-full border border-stone-300 p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white">${generateTimeOptions(eventData.endTime, eventData.startTime)}</select>
                         </div>
                     </div>
-                    <div>
+                    <div class="w-full min-w-0">
                         <label class="text-xs font-bold text-stone-500">参加費</label>
                         <div class="flex items-center gap-2">
                             <input type="text" inputmode="numeric" pattern="[0-9]*" id="editFee" name="${rName()}" autocomplete="new-password" oninput="let v = this.value.replace(/[^0-9]/g, ''); this.value = v ? Number(v).toLocaleString() : '';" class="w-1/3 md:w-1/4 border border-stone-300 p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white text-right" value="${escapeHTML(eventData.fee ? eventData.fee.replace('円','').replace(/,/g, '') : '')}">
                             <span class="text-stone-700 font-bold">円</span>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 gap-2 p-3 md:p-4 bg-white border border-stone-200">
+                    <div class="grid grid-cols-1 gap-2 p-3 md:p-4 bg-white border border-stone-200 w-full min-w-0">
                         <div>
-                            <label class="text-xs font-bold text-stone-500">場所</label>
+                            <label class="text-xs font-bold text-stone-500">表示する場所の名前</label>
                             <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.location || '')}">
                         </div>
                         <div class="mt-2">
@@ -465,23 +466,23 @@ async function renderRsvpPage(id) {
                         </div>
                     </div>
                     
-                    <div class="bg-white p-4 border border-stone-200 rounded-sm">
+                    <div class="bg-white p-3 md:p-4 border border-stone-200 rounded-sm w-full min-w-0 overflow-hidden">
                         <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
                             <input type="checkbox" id="editUseCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer" ${hasCategories ? 'checked' : ''}> 名簿にカテゴリー枠を追加する
                         </label>
-                        <div id="editCategorySetupArea" class="${hasCategories ? '' : 'hidden'} mt-4 space-y-3 pl-2 md:pl-6 border-l-2 border-stone-200">
-                            <div id="editCategoryInputsContainer" class="space-y-1 w-full md:w-2/3">
+                        <div id="editCategorySetupArea" class="${hasCategories ? '' : 'hidden'} mt-4 space-y-3 pl-1 md:pl-6 border-l-2 border-stone-200 w-full">
+                            <div id="editCategoryInputsContainer" class="space-y-1 w-full md:w-2/3 min-w-0">
                                 <!-- JSで描画 -->
                             </div>
                             <button type="button" id="editAddCategoryInputBtn" class="text-xs text-[#7B2C3A] font-bold border border-[#7B2C3A] px-3 py-1.5 rounded-sm hover:bg-[#7B2C3A] hover:text-white transition mt-2 ml-7">${svgPlus} 枠を追加</button>
                         </div>
                     </div>
 
-                    <div>
+                    <div class="w-full min-w-0">
                         <label class="text-xs font-bold text-stone-500">詳細・備考</label>
                         <textarea id="editDesc" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 p-2 h-24 text-base focus:outline-none focus:border-[#7B2C3A] bg-white">${escapeHTML(eventData.description || '')}</textarea>
                     </div>
-                    <div class="flex gap-3 pt-2">
+                    <div class="flex gap-3 pt-2 w-full min-w-0">
                         <button id="saveEditBtn" type="button" class="flex-1 bg-[#7B2C3A] text-white font-bold py-3 rounded-sm hover:bg-[#5A1F29] transition">保存する</button>
                         <button id="cancelEditBtn" type="button" class="bg-stone-300 px-6 py-3 rounded-sm font-bold text-stone-700 hover:bg-stone-400 transition">キャンセル</button>
                     </div>
@@ -602,7 +603,6 @@ async function renderRsvpPage(id) {
             }
         });
 
-        // 編集モードでのカテゴリー追加機能
         const editCatContainer = document.getElementById('editCategoryInputsContainer');
         if (editCatContainer) {
             if (hasCategories) {
@@ -905,8 +905,8 @@ async function renderRsvpPage(id) {
                         </div>
                     </div>
                     
-                    <div class="flex-1 min-w-0 relative pl-1 md:pl-2 overflow-x-auto hide-scrollbar">
-                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[180px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-base py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
+                    <div class="flex-1 min-w-0 pl-1 md:pl-2 overflow-x-auto hide-scrollbar">
+                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[200px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-sm py-1 px-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
                     </div>
                 `;
                 list.appendChild(row);
