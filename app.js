@@ -30,11 +30,12 @@ if (!document.querySelector("meta[name=viewport]")) {
     document.getElementsByTagName('head')[0].appendChild(meta);
 }
 
-// 横スクロールバーを非表示にするためのCSSを注入
+// 横スクロールバー非表示 ＆ 出欠セレクトボックスの中央揃え強制用CSS
 const style = document.createElement('style');
 style.innerHTML = `
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .center-select { text-align-last: center; padding: 0 !important; }
 `;
 document.head.appendChild(style);
 
@@ -560,7 +561,7 @@ async function renderRsvpPage(id) {
                 </div>
             </div>
             
-            <p id="editNotice" class="text-[10px] text-stone-400 mb-1 pl-1 leading-snug">※自分の行の「出欠」や「コメント」はクリックして編集できます。<br>枠からはみ出るコメントは横にスクロールして読めます。</p>
+            <p id="editNotice" class="text-[10px] text-stone-400 mb-1 pl-1 leading-snug">※自分の行の「出欠」や「コメント」はクリックして編集できます。<br>枠からはみ出る部分は横にスクロールして読めます。</p>
             
             <form id="rsvpListForm" autocomplete="off" onsubmit="return false;" class="bg-white rounded-sm shadow-sm border border-stone-200 overflow-hidden">
                 <div id="rsvpListContainer" class="w-full"></div>
@@ -817,25 +818,35 @@ async function renderRsvpPage(id) {
 
             const searchNameStr = document.getElementById('searchName').value.trim().toLowerCase();
 
+            // ★ カテゴリ順 ＞ 性別順（男→女→他）の2段階ソート
+            const genderOrderMap = { '男': 1, '女': 2, 'その他': 3 };
+            
             rsvpDataList.sort((a, b) => {
                 let catIndexA = eventCategories.indexOf(a.category);
                 let catIndexB = eventCategories.indexOf(b.category);
                 if (catIndexA === -1) catIndexA = 999;
                 if (catIndexB === -1) catIndexB = 999;
-                return catIndexA - catIndexB;
+                
+                if (catIndexA !== catIndexB) {
+                    return catIndexA - catIndexB; // まずはカテゴリ順
+                } else {
+                    // 同じカテゴリの中では性別順
+                    let gA = genderOrderMap[a.gender || 'その他'] || 3;
+                    let gB = genderOrderMap[b.gender || 'その他'] || 3;
+                    return gA - gB;
+                }
             });
 
             let counts = { '-': 0, '〇': 0, '△': 0, '×': 0 };
             let visibleTotal = 0;
             let currentCategoryRendered = null; 
 
-            // ★ 列幅の完全共通化 (ヘッダーとデータ行のズレを解消)
+            // ★ 列幅を完全固定（ズレ解消用）
             const catWidth = "w-[64px] md:w-[80px]";
             const nameWidth = hasCategories ? "w-[120px] md:w-[160px]" : "w-[150px] md:w-[220px]";
             const statusWidth = "w-[44px] md:w-[56px]";
             const commentWidth = "flex-1 min-w-0";
 
-            // ★ ヘッダー生成
             const headerHtml = `
                 <div class="flex items-stretch w-full bg-[#F4F1EA] border-b border-stone-300 text-[10px] md:text-xs font-bold text-stone-500 text-center">
                     ${hasCategories ? `<div class="${catWidth} border-r border-stone-200 py-1.5 flex justify-center items-center">カテゴリ</div>` : ''}
@@ -880,33 +891,36 @@ async function renderRsvpPage(id) {
                     currentCategoryRendered = data.category;
                 }
 
-                row.className = `flex items-stretch w-full bg-transparent hover:bg-stone-50 transition flex-nowrap`;
-
-                // ★ 同じカテゴリの横線(上ボーダー)の排除処理
                 const catBorderTop = (isFirstOfCategory && visibleTotal > 1) ? 'border-t border-stone-200' : 'border-t-0';
                 const cellBorderTop = visibleTotal > 1 ? 'border-t border-stone-200' : '';
 
+                row.className = `flex items-stretch w-full bg-transparent hover:bg-stone-50 transition flex-nowrap`;
+
+                // --- カテゴリ列 (はみ出し時のみスクロール) ---
                 let catCellHtml = '';
                 if (hasCategories) {
                     if (isAdmin) {
                         const adminCatOpts = eventCategories.map(c => `<option value="${escapeHTML(c)}" ${data.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('');
                         catCellHtml = `
-                            <div class="${catWidth} ${catBorderTop} border-r border-stone-200 shrink-0 px-1 min-w-0 flex items-center">
+                            <div class="${catWidth} ${catBorderTop} border-r border-stone-200 shrink-0 min-w-0 flex items-center">
                                 <select name="${rName()}" class="cat-dropdown w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[9px] md:text-xs text-stone-600 truncate cursor-pointer px-0.5" data-id="${data.id}">
                                     ${adminCatOpts}
                                 </select>
                             </div>
                         `;
                     } else {
+                        // overflow-x-auto 追加
                         catCellHtml = `
-                            <div class="${catWidth} ${catBorderTop} border-r border-stone-200 shrink-0 px-1 flex items-center text-[10px] md:text-xs text-stone-500 font-bold truncate">
-                                ${isFirstOfCategory ? escapeHTML(data.category) : ''}
+                            <div class="${catWidth} ${catBorderTop} border-r border-stone-200 shrink-0 px-1 overflow-x-auto hide-scrollbar flex items-center">
+                                <div class="text-[10px] md:text-xs text-stone-500 font-bold whitespace-nowrap">
+                                    ${isFirstOfCategory ? escapeHTML(data.category) : ''}
+                                </div>
                             </div>
                         `;
                     }
                 }
 
-                // ★ 名前枠の右端に性別を配置
+                // --- 名前列 ---
                 let nameHtml = '';
                 if (isAdmin) {
                     nameHtml = `
@@ -930,10 +944,10 @@ async function renderRsvpPage(id) {
                     `;
                 }
 
-                // ★ 出欠枠（ヘッダーと共通の幅）
+                // --- 出欠列 (強制中央揃えクラス適用) ---
                 const statusHtml = `
-                    <div class="${statusWidth} ${cellBorderTop} border-r border-stone-200 shrink-0 px-1 flex justify-center items-center">
-                        <select name="${rName()}" class="status-dropdown appearance-none w-full bg-transparent hover:bg-stone-100 focus:outline-none text-sm md:text-base font-bold text-stone-800 cursor-pointer text-center rounded-sm py-1" data-id="${data.id}">
+                    <div class="${statusWidth} ${cellBorderTop} border-r border-stone-200 shrink-0 px-1 flex justify-center items-center min-w-0">
+                        <select name="${rName()}" class="status-dropdown appearance-none w-full bg-transparent hover:bg-stone-100 focus:outline-none text-[13px] md:text-sm font-bold text-stone-800 cursor-pointer center-select transition" data-id="${data.id}">
                             <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
                             <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
                             <option value="△" ${currentStatus === '△' ? 'selected' : ''}>△</option>
@@ -942,9 +956,8 @@ async function renderRsvpPage(id) {
                     </div>
                 `;
                 
-                // ★ コメントのみスクロール (はみ出た時だけスクロール)
+                // --- コメント列 ---
                 const commentLen = (data.comment || '').length;
-                // 文字数が一定以上なら input の最小幅を広げる（短ければ親枠に収まる＝スクロールしない）
                 const minW = commentLen > 8 ? `min-width: ${commentLen * 1.2}em;` : 'min-width: 100%;';
                 const commentHtml = `
                     <div class="${commentWidth} ${cellBorderTop} px-1 overflow-x-auto hide-scrollbar flex items-center">
