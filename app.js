@@ -562,8 +562,8 @@ async function renderRsvpPage(id) {
             
             <p id="editNotice" class="text-[10px] text-stone-400 mb-1 pl-1 leading-snug">※自分の行の「出欠」や「コメント」はクリックして編集できます。<br>枠からはみ出るコメントは横にスクロールして読めます。</p>
             
-            <form id="rsvpListForm" autocomplete="off" onsubmit="return false;" class="bg-white rounded-sm shadow-sm border border-stone-200">
-                <div id="rsvpListContainer"></div>
+            <form id="rsvpListForm" autocomplete="off" onsubmit="return false;" class="bg-white rounded-sm shadow-sm border border-stone-200 overflow-hidden">
+                <div id="rsvpListContainer" class="w-full"></div>
             </form>
             
             <div class="mt-10 pt-6 border-t border-stone-200 flex flex-col items-center gap-4">
@@ -829,24 +829,24 @@ async function renderRsvpPage(id) {
             let visibleTotal = 0;
             let currentCategoryRendered = null; 
 
-            // ★ 列幅を統一。PC・スマホ問わず同じ変数を使って幅を固定。
-            // カテゴリ:64px/80px、名前:120px/160px、出欠:32px/40px、コメント:残り全幅
+            // ★ 列幅の完全共通化 (ヘッダーとデータ行のズレを解消)
             const catWidth = "w-[64px] md:w-[80px]";
             const nameWidth = hasCategories ? "w-[120px] md:w-[160px]" : "w-[150px] md:w-[220px]";
-            const statusWidth = "w-[32px] md:w-[40px]"; // 出欠列を極限までコンパクトに
+            const statusWidth = "w-[44px] md:w-[56px]";
             const commentWidth = "flex-1 min-w-0";
 
+            // ★ ヘッダー生成
             const headerHtml = `
-                <div class="flex items-center w-full py-1.5 bg-[#F4F1EA] border-b border-stone-300 text-[10px] md:text-xs font-bold text-stone-500 text-center">
-                    ${hasCategories ? `<div class="${catWidth} shrink-0 px-1">カテゴリ</div>` : ''}
-                    <div class="${nameWidth} shrink-0 px-1">お名前</div>
-                    <div class="${statusWidth} shrink-0 px-1">出欠</div>
-                    <div class="${commentWidth} px-1">コメント</div>
+                <div class="flex items-stretch w-full bg-[#F4F1EA] border-b border-stone-300 text-[10px] md:text-xs font-bold text-stone-500 text-center">
+                    ${hasCategories ? `<div class="${catWidth} border-r border-stone-200 py-1.5 flex justify-center items-center">カテゴリ</div>` : ''}
+                    <div class="${nameWidth} border-r border-stone-200 py-1.5 flex justify-center items-center">お名前</div>
+                    <div class="${statusWidth} border-r border-stone-200 py-1.5 flex justify-center items-center">出欠</div>
+                    <div class="${commentWidth} py-1.5 flex justify-center items-center">コメント</div>
                 </div>
             `;
             
             const bodyDiv = document.createElement('div');
-            bodyDiv.className = "flex flex-col";
+            bodyDiv.className = "flex flex-col w-full";
 
             rsvpDataList.forEach((data) => {
                 const gender = data.gender || 'その他';
@@ -874,22 +874,24 @@ async function renderRsvpPage(id) {
                 if(counts[currentStatus] !== undefined) counts[currentStatus]++;
 
                 const row = document.createElement('div');
-                let isNewCategory = false;
+                let isFirstOfCategory = false;
                 if (hasCategories && data.category !== currentCategoryRendered) {
-                    isNewCategory = true;
+                    isFirstOfCategory = true;
                     currentCategoryRendered = data.category;
                 }
 
-                const borderClass = (hasCategories && isNewCategory && visibleTotal > 1) ? 'border-t-[3px] border-stone-300' : 'border-t border-stone-100';
-                row.className = `flex items-center w-full py-1.5 bg-transparent hover:bg-stone-50 transition flex-nowrap ${borderClass}`;
+                row.className = `flex items-stretch w-full bg-transparent hover:bg-stone-50 transition flex-nowrap`;
 
-                // --- カテゴリ列 ---
+                // ★ 同じカテゴリの横線(上ボーダー)の排除処理
+                const catBorderTop = (isFirstOfCategory && visibleTotal > 1) ? 'border-t border-stone-200' : 'border-t-0';
+                const cellBorderTop = visibleTotal > 1 ? 'border-t border-stone-200' : '';
+
                 let catCellHtml = '';
                 if (hasCategories) {
                     if (isAdmin) {
                         const adminCatOpts = eventCategories.map(c => `<option value="${escapeHTML(c)}" ${data.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('');
                         catCellHtml = `
-                            <div class="${catWidth} shrink-0 px-1 min-w-0">
+                            <div class="${catWidth} ${catBorderTop} border-r border-stone-200 shrink-0 px-1 min-w-0 flex items-center">
                                 <select name="${rName()}" class="cat-dropdown w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[9px] md:text-xs text-stone-600 truncate cursor-pointer px-0.5" data-id="${data.id}">
                                     ${adminCatOpts}
                                 </select>
@@ -897,21 +899,21 @@ async function renderRsvpPage(id) {
                         `;
                     } else {
                         catCellHtml = `
-                            <div class="${catWidth} shrink-0 px-1 text-[10px] md:text-xs text-stone-500 font-bold truncate">
-                                ${isNewCategory ? escapeHTML(data.category) : ''}
+                            <div class="${catWidth} ${catBorderTop} border-r border-stone-200 shrink-0 px-1 flex items-center text-[10px] md:text-xs text-stone-500 font-bold truncate">
+                                ${isFirstOfCategory ? escapeHTML(data.category) : ''}
                             </div>
                         `;
                     }
                 }
 
-                // --- 名前と性別列 ---
+                // ★ 名前枠の右端に性別を配置
                 let nameHtml = '';
                 if (isAdmin) {
                     nameHtml = `
-                        <div class="${nameWidth} shrink-0 px-1 min-w-0 flex items-center gap-0.5 md:gap-1">
-                            <input type="text" name="${rName()}" class="last-name-input w-2/5 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
-                            <input type="text" name="${rName()}" class="first-name-input w-2/5 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
-                            <select name="${rName()}" class="gender-dropdown w-1/5 min-w-[32px] md:min-w-[40px] shrink-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[9px] md:text-xs text-stone-400 cursor-pointer px-0.5" data-id="${data.id}">
+                        <div class="${nameWidth} ${cellBorderTop} border-r border-stone-200 shrink-0 px-1 min-w-0 flex justify-between items-center gap-0.5 md:gap-1">
+                            <input type="text" name="${rName()}" class="last-name-input w-[35%] min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
+                            <input type="text" name="${rName()}" class="first-name-input w-[35%] min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
+                            <select name="${rName()}" class="gender-dropdown w-[30%] min-w-0 shrink-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[9px] md:text-xs text-stone-400 cursor-pointer px-0.5 ml-auto" data-id="${data.id}">
                                 <option value="男" ${gender === '男' ? 'selected' : ''}>(男)</option>
                                 <option value="女" ${gender === '女' ? 'selected' : ''}>(女)</option>
                                 <option value="その他" ${gender === 'その他' ? 'selected' : ''}>(他)</option>
@@ -921,16 +923,16 @@ async function renderRsvpPage(id) {
                 } else {
                     const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
                     nameHtml = `
-                        <div class="${nameWidth} shrink-0 px-1 min-w-0 flex justify-between items-center gap-1">
-                            <div class="font-bold text-stone-800 truncate text-xs md:text-sm leading-tight">${fullName}</div>
-                            <div class="text-[9px] md:text-[10px] text-stone-400 shrink-0 ml-auto">(${escapeHTML(gender)})</div>
+                        <div class="${nameWidth} ${cellBorderTop} border-r border-stone-200 shrink-0 px-1 min-w-0 flex justify-between items-center gap-1">
+                            <span class="font-bold text-stone-800 truncate text-[11px] md:text-sm">${fullName}</span>
+                            <span class="text-[9px] md:text-[10px] text-stone-400 shrink-0 ml-1">(${escapeHTML(gender)})</span>
                         </div>
                     `;
                 }
 
-                // --- 出欠列 ---
+                // ★ 出欠枠（ヘッダーと共通の幅）
                 const statusHtml = `
-                    <div class="${statusWidth} shrink-0 px-1 flex justify-center items-center">
+                    <div class="${statusWidth} ${cellBorderTop} border-r border-stone-200 shrink-0 px-1 flex justify-center items-center">
                         <select name="${rName()}" class="status-dropdown appearance-none w-full bg-transparent hover:bg-stone-100 focus:outline-none text-sm md:text-base font-bold text-stone-800 cursor-pointer text-center rounded-sm py-1" data-id="${data.id}">
                             <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
                             <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
@@ -940,10 +942,15 @@ async function renderRsvpPage(id) {
                     </div>
                 `;
                 
-                // --- コメント列 ---
+                // ★ コメントのみスクロール (はみ出た時だけスクロール)
+                const commentLen = (data.comment || '').length;
+                // 文字数が一定以上なら input の最小幅を広げる（短ければ親枠に収まる＝スクロールしない）
+                const minW = commentLen > 8 ? `min-width: ${commentLen * 1.2}em;` : 'min-width: 100%;';
                 const commentHtml = `
-                    <div class="${commentWidth} px-1 overflow-x-auto hide-scrollbar flex items-center">
-                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[120px] md:min-w-[200px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-[11px] md:text-sm py-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
+                    <div class="${commentWidth} ${cellBorderTop} px-1 overflow-x-auto hide-scrollbar flex items-center">
+                        <div class="w-max min-w-full">
+                            <input type="text" name="${rName()}" class="comment-input w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-[11px] md:text-sm py-1.5 px-1 transition" style="${minW}" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
+                        </div>
                     </div>
                 `;
 
