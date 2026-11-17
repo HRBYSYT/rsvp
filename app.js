@@ -213,7 +213,7 @@ function renderCreateEventPage() {
 
             <div class="bg-[#F4F1EA] p-3 border border-stone-200 rounded-sm space-y-3">
                 <div>
-                    <label class="block font-bold mb-1 text-stone-700">表示する場所の名前 <span class="text-xs font-normal text-stone-500">（自由に編集可能）</span></label>
+                    <label class="block font-bold mb-1 text-stone-700">場所</label>
                     <input type="text" id="eventLocation" name="${rName()}" autocomplete="new-password" class="w-full border border-stone-300 rounded-sm p-2 text-base focus:outline-none focus:border-[#7B2C3A] bg-white transition">
                 </div>
                 <div>
@@ -224,7 +224,7 @@ function renderCreateEventPage() {
 
             <div class="bg-white p-3 border border-stone-200 rounded-sm">
                 <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
-                    <input type="checkbox" id="useCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリー（グループ枠）を追加する
+                    <input type="checkbox" id="useCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer"> 名簿にカテゴリーを追加する
                 </label>
                 <div id="categorySetupArea" class="hidden mt-3 space-y-2 pl-1 md:pl-4 border-l-2 border-stone-200 w-full overflow-hidden">
                     <div id="categoryInputsContainer" class="space-y-1 w-full md:w-2/3 min-w-0">
@@ -452,7 +452,7 @@ async function renderRsvpPage(id) {
                     </div>
                     <div class="grid grid-cols-1 gap-2 p-3 bg-white border border-stone-200 w-full min-w-0">
                         <div>
-                            <label class="text-xs font-bold text-stone-500">表示する場所の名前</label>
+                            <label class="text-xs font-bold text-stone-500">場所</label>
                             <input type="text" id="editLocation" name="${rName()}" autocomplete="new-password" class="w-full border-b border-stone-300 py-1 text-base focus:outline-none focus:border-[#7B2C3A] bg-white" value="${escapeHTML(eventData.location || '')}">
                         </div>
                         <div class="mt-2">
@@ -463,7 +463,7 @@ async function renderRsvpPage(id) {
                     
                     <div class="bg-white p-3 border border-stone-200 rounded-sm w-full min-w-0 overflow-hidden">
                         <label class="flex items-center gap-2 cursor-pointer font-bold text-stone-700 select-none">
-                            <input type="checkbox" id="editUseCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer" ${hasCategories ? 'checked' : ''}> 名簿にカテゴリー枠を追加する
+                            <input type="checkbox" id="editUseCategoriesToggle" class="accent-[#7B2C3A] w-4 h-4 cursor-pointer" ${hasCategories ? 'checked' : ''}> 名簿にカテゴリーを追加する
                         </label>
                         <div id="editCategorySetupArea" class="${hasCategories ? '' : 'hidden'} mt-3 space-y-2 pl-1 md:pl-4 border-l-2 border-stone-200 w-full">
                             <div id="editCategoryInputsContainer" class="space-y-1 w-full md:w-2/3 min-w-0">
@@ -636,7 +636,7 @@ async function renderRsvpPage(id) {
             if (inputPin !== eventData.pin) return await showModal('alert', 'エラー', 'パスワードが違います。');
             
             isAdmin = true;
-            document.getElementById('editNotice').textContent = "【管理者モード】名前や性別、カテゴリー枠も直接クリックして編集できます。";
+            document.getElementById('editNotice').textContent = "【管理者モード】名前や性別、カテゴリーも直接クリックして編集できます。";
             renderListDOM();
             
             document.getElementById('eventDisplayArea').classList.add('hidden');
