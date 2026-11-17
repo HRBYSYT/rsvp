@@ -828,9 +828,8 @@ async function renderRsvpPage(id) {
                 if (catIndexB === -1) catIndexB = 999;
                 
                 if (catIndexA !== catIndexB) {
-                    return catIndexA - catIndexB; // まずはカテゴリ順
+                    return catIndexA - catIndexB; 
                 } else {
-                    // 同じカテゴリの中では性別順
                     let gA = genderOrderMap[a.gender || 'その他'] || 3;
                     let gB = genderOrderMap[b.gender || 'その他'] || 3;
                     return gA - gB;
@@ -841,7 +840,7 @@ async function renderRsvpPage(id) {
             let visibleTotal = 0;
             let currentCategoryRendered = null; 
 
-            // ★ 列幅を完全固定（ズレ解消用）
+            // ★ 列幅を完全固定
             const catWidth = "w-[64px] md:w-[80px]";
             const nameWidth = hasCategories ? "w-[120px] md:w-[160px]" : "w-[150px] md:w-[220px]";
             const statusWidth = "w-[44px] md:w-[56px]";
@@ -891,10 +890,19 @@ async function renderRsvpPage(id) {
                     currentCategoryRendered = data.category;
                 }
 
-                const catBorderTop = (isFirstOfCategory && visibleTotal > 1) ? 'border-t border-stone-200' : 'border-t-0';
-                const cellBorderTop = visibleTotal > 1 ? 'border-t border-stone-200' : '';
-
                 row.className = `flex items-stretch w-full bg-transparent hover:bg-stone-50 transition flex-nowrap`;
+
+                // ★ カテゴリの区切り目は太線（border-t-[3px] border-stone-300）にする
+                const catBorderTop = (isFirstOfCategory && visibleTotal > 1) ? 'border-t-[3px] border-stone-300' : 'border-t-0';
+                
+                let cellBorderTop = '';
+                if (visibleTotal > 1) {
+                    if (hasCategories && isFirstOfCategory) {
+                        cellBorderTop = 'border-t-[3px] border-stone-300';
+                    } else {
+                        cellBorderTop = 'border-t border-stone-200';
+                    }
+                }
 
                 // --- カテゴリ列 (はみ出し時のみスクロール) ---
                 let catCellHtml = '';
@@ -909,7 +917,6 @@ async function renderRsvpPage(id) {
                             </div>
                         `;
                     } else {
-                        // overflow-x-auto 追加
                         catCellHtml = `
                             <div class="${catWidth} ${catBorderTop} border-r border-stone-200 shrink-0 px-1 overflow-x-auto hide-scrollbar flex items-center">
                                 <div class="text-[10px] md:text-xs text-stone-500 font-bold whitespace-nowrap">
@@ -944,7 +951,7 @@ async function renderRsvpPage(id) {
                     `;
                 }
 
-                // --- 出欠列 (強制中央揃えクラス適用) ---
+                // --- 出欠列 ---
                 const statusHtml = `
                     <div class="${statusWidth} ${cellBorderTop} border-r border-stone-200 shrink-0 px-1 flex justify-center items-center min-w-0">
                         <select name="${rName()}" class="status-dropdown appearance-none w-full bg-transparent hover:bg-stone-100 focus:outline-none text-[13px] md:text-sm font-bold text-stone-800 cursor-pointer center-select transition" data-id="${data.id}">
