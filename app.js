@@ -144,7 +144,6 @@ function formatDateDisplay(dateStr) {
 function createCategoryInputRow(value = '') {
     const row = document.createElement('div');
     row.className = "flex items-center gap-1 md:gap-2 category-row bg-white p-1 rounded-sm border border-transparent hover:border-stone-200 transition w-full min-w-0";
-    // ★ 変更追従のために data-original-value を仕込む
     row.innerHTML = `
         <span class="drag-handle p-1 shrink-0">${svgDrag}</span>
         <input type="text" data-original-value="${escapeHTML(value)}" class="cat-input flex-1 min-w-0 border border-stone-300 rounded-sm p-1.5 md:p-2 text-sm md:text-base focus:outline-none focus:border-[#7B2C3A] bg-stone-50 focus:bg-white transition" value="${escapeHTML(value)}" placeholder="">
@@ -656,7 +655,7 @@ async function renderRsvpPage(id) {
             const formattedFee = feeValue ? `${Number(feeValue).toLocaleString()}円` : '';
 
             let newCategories = [];
-            let categoryUpdates = []; // ★ カテゴリ名変更の一括追従用配列
+            let categoryUpdates = []; 
 
             const toggle = document.getElementById('editUseCategoriesToggle');
             if (toggle && toggle.checked) {
@@ -666,7 +665,6 @@ async function renderRsvpPage(id) {
                     const originalVal = inp.getAttribute('data-original-value');
                     if (val && !newCategories.includes(val)) {
                         newCategories.push(val);
-                        // もしカテゴリ名が変更されていたら更新リストに追加
                         if (originalVal && originalVal !== val) {
                             categoryUpdates.push({ old: originalVal, new: val });
                         }
@@ -688,7 +686,6 @@ async function renderRsvpPage(id) {
                     categories: newCategories
                 });
 
-                // ★ カテゴリ名が変更された場合、所属している人全員のデータを一括アップデートする
                 if (categoryUpdates.length > 0) {
                     const rsvpSnaps = await getDocs(collection(db, "events", id, "rsvps"));
                     const updatePromises = [];
@@ -820,7 +817,6 @@ async function renderRsvpPage(id) {
 
             const searchNameStr = document.getElementById('searchName').value.trim().toLowerCase();
 
-            // ★ 新しく保存されたカテゴリ配列の順序通りにソート
             rsvpDataList.sort((a, b) => {
                 let catIndexA = eventCategories.indexOf(a.category);
                 let catIndexB = eventCategories.indexOf(b.category);
@@ -833,18 +829,19 @@ async function renderRsvpPage(id) {
             let visibleTotal = 0;
             let currentCategoryRendered = null; 
 
-            // ★ 列幅の共通変数定義（ここでヘッダーとデータ行のズレを完全解消）
-            const catWidth = "w-[64px] md:w-[80px] shrink-0 px-1";
-            const nameWidth = hasCategories ? "w-[120px] md:w-[160px] shrink-0 px-1" : "w-[150px] md:w-[220px] shrink-0 px-1";
-            const statusWidth = "w-[44px] md:w-[56px] shrink-0 px-1 text-center flex justify-center items-center";
-            const commentWidth = "flex-1 min-w-0 px-1";
+            // ★ 列幅を統一。PC・スマホ問わず同じ変数を使って幅を固定。
+            // カテゴリ:64px/80px、名前:120px/160px、出欠:32px/40px、コメント:残り全幅
+            const catWidth = "w-[64px] md:w-[80px]";
+            const nameWidth = hasCategories ? "w-[120px] md:w-[160px]" : "w-[150px] md:w-[220px]";
+            const statusWidth = "w-[32px] md:w-[40px]"; // 出欠列を極限までコンパクトに
+            const commentWidth = "flex-1 min-w-0";
 
             const headerHtml = `
-                <div class="flex items-center w-full py-1.5 bg-[#F4F1EA] border-b border-stone-300 text-[10px] md:text-xs font-bold text-stone-500">
-                    ${hasCategories ? `<div class="${catWidth}">カテゴリ</div>` : ''}
-                    <div class="${nameWidth}">お名前</div>
-                    <div class="${statusWidth}">出欠</div>
-                    <div class="${commentWidth}">コメント</div>
+                <div class="flex items-center w-full py-1.5 bg-[#F4F1EA] border-b border-stone-300 text-[10px] md:text-xs font-bold text-stone-500 text-center">
+                    ${hasCategories ? `<div class="${catWidth} shrink-0 px-1">カテゴリ</div>` : ''}
+                    <div class="${nameWidth} shrink-0 px-1">お名前</div>
+                    <div class="${statusWidth} shrink-0 px-1">出欠</div>
+                    <div class="${commentWidth} px-1">コメント</div>
                 </div>
             `;
             
@@ -883,7 +880,7 @@ async function renderRsvpPage(id) {
                     currentCategoryRendered = data.category;
                 }
 
-                const borderClass = (hasCategories && isNewCategory && visibleTotal > 1) ? 'border-t-2 border-stone-300' : 'border-t border-stone-100';
+                const borderClass = (hasCategories && isNewCategory && visibleTotal > 1) ? 'border-t-[3px] border-stone-300' : 'border-t border-stone-100';
                 row.className = `flex items-center w-full py-1.5 bg-transparent hover:bg-stone-50 transition flex-nowrap ${borderClass}`;
 
                 // --- カテゴリ列 ---
@@ -892,26 +889,26 @@ async function renderRsvpPage(id) {
                     if (isAdmin) {
                         const adminCatOpts = eventCategories.map(c => `<option value="${escapeHTML(c)}" ${data.category === c ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('');
                         catCellHtml = `
-                            <div class="${catWidth} min-w-0">
-                                <select name="${rName()}" class="cat-dropdown w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[10px] md:text-xs text-stone-600 truncate cursor-pointer px-0.5" data-id="${data.id}">
+                            <div class="${catWidth} shrink-0 px-1 min-w-0">
+                                <select name="${rName()}" class="cat-dropdown w-full bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[9px] md:text-xs text-stone-600 truncate cursor-pointer px-0.5" data-id="${data.id}">
                                     ${adminCatOpts}
                                 </select>
                             </div>
                         `;
                     } else {
                         catCellHtml = `
-                            <div class="${catWidth} text-[10px] md:text-xs text-stone-500 font-bold truncate">
+                            <div class="${catWidth} shrink-0 px-1 text-[10px] md:text-xs text-stone-500 font-bold truncate">
                                 ${isNewCategory ? escapeHTML(data.category) : ''}
                             </div>
                         `;
                     }
                 }
 
-                // --- 名前と性別列（右端に配置） ---
+                // --- 名前と性別列 ---
                 let nameHtml = '';
                 if (isAdmin) {
                     nameHtml = `
-                        <div class="${nameWidth} min-w-0 flex items-center gap-0.5 md:gap-1">
+                        <div class="${nameWidth} shrink-0 px-1 min-w-0 flex items-center gap-0.5 md:gap-1">
                             <input type="text" name="${rName()}" class="last-name-input w-2/5 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.lastName || '')}" placeholder="姓">
                             <input type="text" name="${rName()}" class="first-name-input w-2/5 min-w-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-stone-800 font-bold truncate text-[10px] md:text-sm px-0.5" data-id="${data.id}" value="${escapeHTML(data.firstName || '')}" placeholder="名">
                             <select name="${rName()}" class="gender-dropdown w-1/5 min-w-[32px] md:min-w-[40px] shrink-0 bg-transparent border-b border-transparent hover:border-stone-300 focus:outline-none text-[9px] md:text-xs text-stone-400 cursor-pointer px-0.5" data-id="${data.id}">
@@ -924,7 +921,7 @@ async function renderRsvpPage(id) {
                 } else {
                     const fullName = `${escapeHTML(data.lastName || '')} ${escapeHTML(data.firstName || '')}`.trim();
                     nameHtml = `
-                        <div class="${nameWidth} min-w-0 flex justify-between items-center gap-1">
+                        <div class="${nameWidth} shrink-0 px-1 min-w-0 flex justify-between items-center gap-1">
                             <div class="font-bold text-stone-800 truncate text-xs md:text-sm leading-tight">${fullName}</div>
                             <div class="text-[9px] md:text-[10px] text-stone-400 shrink-0 ml-auto">(${escapeHTML(gender)})</div>
                         </div>
@@ -933,8 +930,8 @@ async function renderRsvpPage(id) {
 
                 // --- 出欠列 ---
                 const statusHtml = `
-                    <div class="${statusWidth}">
-                        <select name="${rName()}" class="status-dropdown appearance-none w-full bg-transparent hover:bg-stone-100 focus:outline-none text-[13px] md:text-sm font-bold text-stone-800 cursor-pointer text-center rounded-sm py-1" data-id="${data.id}">
+                    <div class="${statusWidth} shrink-0 px-1 flex justify-center items-center">
+                        <select name="${rName()}" class="status-dropdown appearance-none w-full bg-transparent hover:bg-stone-100 focus:outline-none text-sm md:text-base font-bold text-stone-800 cursor-pointer text-center rounded-sm py-1" data-id="${data.id}">
                             <option value="-" ${currentStatus === '-' ? 'selected' : ''}>-</option>
                             <option value="〇" ${currentStatus === '〇' ? 'selected' : ''}>〇</option>
                             <option value="△" ${currentStatus === '△' ? 'selected' : ''}>△</option>
@@ -945,8 +942,8 @@ async function renderRsvpPage(id) {
                 
                 // --- コメント列 ---
                 const commentHtml = `
-                    <div class="${commentWidth} overflow-x-auto hide-scrollbar flex items-center">
-                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[140px] md:min-w-[200px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-[11px] md:text-sm py-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
+                    <div class="${commentWidth} px-1 overflow-x-auto hide-scrollbar flex items-center">
+                        <input type="text" name="${rName()}" class="comment-input w-full min-w-[120px] md:min-w-[200px] bg-transparent border-b border-transparent hover:border-stone-300 focus:border-[#7B2C3A] focus:bg-white focus:outline-none text-stone-600 text-[11px] md:text-sm py-1 transition" data-id="${data.id}" value="${escapeHTML(data.comment || '')}" placeholder="コメントを追加">
                     </div>
                 `;
 
